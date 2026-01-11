@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Couleurs par défaut (Soparimex) */
+  --site-bg: #F8FAFC;
+  --header-bg: #ffffff;
+  --footer-bg: #0f172a;
+  --primary-button: #2563eb;
+  --button-text: #ffffff;
+  --main-text: #1e293b;
+}
+
+body {
+  background-color: var(--site-bg);
+  color: var(--main-text);
+  transition: background-color 0.3s ease;
+}
+
+/* On crée des classes utilitaires pour utiliser nos variables */
+.bg-site { background-color: var(--site-bg); }
+.bg-header { background-color: var(--header-bg); }
+.bg-footer { background-color: var(--footer-bg); }
+.bg-primary-custom { background-color: var(--primary-button); }
+.text-main { color: var(--main-text); }
+.text-btn { color: var(--button-text); }

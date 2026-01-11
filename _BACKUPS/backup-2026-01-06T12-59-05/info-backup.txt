@@ -1,0 +1,2 @@
+DATE : 06/01/2026 13:59:05
+MESSAGE : Connexion fonctionnelle et redirection vers Dashboard
