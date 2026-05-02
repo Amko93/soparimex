@@ -28,6 +28,7 @@ const DashboardPage = () => {
   });
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -96,7 +97,7 @@ const DashboardPage = () => {
     e.preventDefault();
     setPasswordMessage({ type: '', text: '' });
 
-    if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
       setPasswordMessage({ type: 'error', text: 'Veuillez remplir tous les champs.' });
       return;
     }
@@ -113,10 +114,20 @@ const DashboardPage = () => {
 
     setPasswordLoading(true);
     try {
+      // 1. Vérifier l'ancien mot de passe via re-authentification
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: profile.email,
+        password: passwordForm.currentPassword,
+      });
+      if (signInError) {
+        setPasswordMessage({ type: 'error', text: 'Mot de passe actuel incorrect.' });
+        return;
+      }
+
+      // 2. Ancien mdp correct → mettre à jour
       const { error } = await supabase.auth.updateUser({ password: passwordForm.newPassword });
-      
       if (error) throw error;
-      
+
       setPasswordMessage({ type: 'success', text: 'Mot de passe mis à jour avec succès !' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setTimeout(() => {
@@ -251,6 +262,28 @@ const DashboardPage = () => {
               )}
               
               <div>
+                <label className="text-[10px] font-bold text-slate-300 uppercase block mb-2">Mot de passe actuel</label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                    className="w-full bg-slate-50 border p-3 pr-10 rounded-lg font-bold"
+                    placeholder="Votre mot de passe actuel"
+                    disabled={passwordLoading}
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                  >
+                    {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
                 <label className="text-[10px] font-bold text-slate-300 uppercase block mb-2">Nouveau mot de passe</label>
                 <div className="relative">
                   <input
@@ -260,6 +293,7 @@ const DashboardPage = () => {
                     className="w-full bg-slate-50 border p-3 pr-10 rounded-lg font-bold"
                     placeholder="Minimum 6 caractères"
                     disabled={passwordLoading}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -281,6 +315,7 @@ const DashboardPage = () => {
                     className="w-full bg-slate-50 border p-3 pr-10 rounded-lg font-bold"
                     placeholder="Répétez le mot de passe"
                     disabled={passwordLoading}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
