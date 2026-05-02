@@ -62,7 +62,11 @@ const SelectionPage = () => {
         product_id: p.id,
       }));
       const { error: itemsError } = await supabase.from('lead_request_items').insert(items);
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        // Rollback manuel : supprimer le lead orphelin avant de propager l'erreur
+        await supabase.from('lead_requests').delete().eq('id', lead.id);
+        throw itemsError;
+      }
 
       // Envoi de l'email de notification aux admins (via send-email qui lit site_settings)
       try {
