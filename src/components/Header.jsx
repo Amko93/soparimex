@@ -19,9 +19,17 @@ const Header = () => {
   const searchRefDesktop = useRef(null);
   const searchRefMobile = useRef(null);
 
-  const fetchRole = async (userId) => {
-    const { data } = await supabase.from('profiles').select('role').eq('id', userId).single();
-    if (data) setUserRole(data.role);
+  const fetchRole = async (userId, attempt = 1) => {
+    try {
+      const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).single();
+      if (error) throw error;
+      if (data) setUserRole(data.role);
+    } catch (err) {
+      console.error(`fetchRole échoué (tentative ${attempt}):`, err);
+      if (attempt < 3) {
+        setTimeout(() => fetchRole(userId, attempt + 1), attempt * 1000);
+      }
+    }
   };
 
   useEffect(() => {
