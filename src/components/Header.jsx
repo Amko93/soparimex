@@ -16,7 +16,8 @@ const Header = () => {
   const [isSearching, setIsSearching] = useState(false); 
   const [showDropdown, setShowDropdown] = useState(false); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Nouvel état pour le menu mobile
-  const searchRef = useRef(null);
+  const searchRefDesktop = useRef(null);
+  const searchRefMobile = useRef(null);
 
   const fetchRole = async (userId) => {
     const { data } = await supabase.from('profiles').select('role').eq('id', userId).single();
@@ -38,7 +39,9 @@ const Header = () => {
 
     // Gestion Clic en dehors pour fermer la recherche
     const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
+      const inDesktop = searchRefDesktop.current?.contains(event.target);
+      const inMobile = searchRefMobile.current?.contains(event.target);
+      if (!inDesktop && !inMobile) {
         setShowDropdown(false);
       }
     };
@@ -127,7 +130,7 @@ const Header = () => {
         {/* --- ACTIONS DESKTOP (Recherche + User) --- */}
         <div className="hidden lg:flex items-center gap-3">
           {/* BARRE DE RECHERCHE */}
-          <div className="relative w-48 xl:w-72 2xl:w-96" ref={searchRef}>
+          <div className="relative w-48 xl:w-72 2xl:w-96" ref={searchRefDesktop}>
             <div className="relative">
               <input 
                 type="text" 
@@ -243,7 +246,7 @@ const Header = () => {
           {/* Contenu du menu */}
           <div className="flex flex-col p-6 gap-6">
             {/* Recherche Mobile */}
-            <div className="relative w-full" ref={searchRef}>
+            <div className="relative w-full" ref={searchRefMobile}>
               <input 
                 type="text" 
                 placeholder="Rechercher..." 
