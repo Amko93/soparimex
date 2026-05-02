@@ -69,15 +69,26 @@ const LoginPage = () => {
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
-      // Gestion de l'erreur "Email not confirmed"
-      if (authError.message?.includes('email') && authError.message?.includes('confirm')) {
-        setMessage({ 
-          type: 'error', 
-          text: 'Veuillez cliquer sur le lien reçu par email pour activer votre compte.' 
-        });
+      const msg = authError.message?.toLowerCase() ?? '';
+      let text;
+      if (msg.includes('email') && msg.includes('confirm')) {
+        text = 'Veuillez cliquer sur le lien reçu par email pour activer votre compte.';
+      } else if (
+        msg.includes('invalid login credentials') ||
+        msg.includes('invalid credentials') ||
+        msg.includes('wrong password') ||
+        msg.includes('user not found') ||
+        msg.includes('no user found')
+      ) {
+        text = 'Email ou mot de passe incorrect.';
+      } else if (msg.includes('network') || msg.includes('fetch') || msg.includes('failed')) {
+        text = 'Erreur réseau. Vérifiez votre connexion et réessayez.';
+      } else if (msg.includes('too many') || msg.includes('rate limit')) {
+        text = 'Trop de tentatives. Veuillez patienter quelques minutes.';
       } else {
-        setMessage({ type: 'error', text: "Erreur de connexion." });
+        text = 'Erreur de connexion. Réessayez ou contactez le support.';
       }
+      setMessage({ type: 'error', text });
       setLoading(false);
       return;
     }
