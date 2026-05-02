@@ -26,10 +26,23 @@ const AdminLeadsArchivePage = () => {
   }, [currentUser?.id]);
 
   const loadCurrentUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) return;
-    const { data } = await supabase.from('profiles').select('id, role').eq('id', session.user.id).single();
-    if (data) setCurrentUser({ id: data.id, role: (data.role || '').toLowerCase() });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        setLoading(false); // Pas de session → fetchLeads ne sera jamais appelé
+        return;
+      }
+      const { data } = await supabase.from('profiles').select('id, role').eq('id', session.user.id).single();
+      if (data) {
+        setCurrentUser({ id: data.id, role: (data.role || '').toLowerCase() });
+        // fetchLeads sera déclenché par le useEffect sur currentUser?.id
+      } else {
+        setLoading(false); // Profil introuvable → fetchLeads ne sera pas appelé
+      }
+    } catch (err) {
+      console.error('Erreur loadCurrentUser:', err);
+      setLoading(false); // Erreur réseau → on sort du spinner
+    }
   };
 
   const fetchLeads = async () => {
