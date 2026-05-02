@@ -210,7 +210,12 @@ const AdminCategoriesPage = () => {
         setUploading(false); return;
       }
       const fileName = `${Date.now()}_${formData.image.name}`;
-      await supabase.storage.from('images').upload(fileName, formData.image);
+      const { error: uploadError } = await supabase.storage.from('images').upload(fileName, formData.image);
+      if (uploadError) {
+        toast("Erreur upload image : " + uploadError.message, 'error');
+        setUploading(false);
+        return;
+      }
       const { data: publicRes } = supabase.storage.from('images').getPublicUrl(fileName);
       imageUrl = publicRes.publicUrl;
     }
