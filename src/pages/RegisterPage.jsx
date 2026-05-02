@@ -23,6 +23,11 @@ const RegisterPage = () => {
     if (formData.siret && !/^\d{14}$/.test(formData.siret.replace(/\s/g, '')))
       newErrors.siret = 'Le SIRET doit contenir exactement 14 chiffres';
     if (!formData.phone.trim()) newErrors.phone = 'Téléphone requis';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email requis';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      newErrors.email = 'Format email invalide (ex : nom@société.fr)';
+    }
     if (formData.password.length < 8) newErrors.password = 'Mot de passe : 8 caractères minimum';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -127,7 +132,10 @@ const RegisterPage = () => {
                 {errors.phone && <p className="text-red-500 text-xs font-bold mt-1 ml-2">{errors.phone}</p>}
               </div>
             </div>
-            <input type="email" placeholder="Email *" required className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-blue-500" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+            <div>
+              <input type="email" placeholder="Email *" className={`w-full bg-slate-50 border rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-400' : 'border-slate-200'}`} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+              {errors.email && <p className="text-red-500 text-xs font-bold mt-1 ml-2">{errors.email}</p>}
+            </div>
             <div>
               <div className="relative">
                 <input
