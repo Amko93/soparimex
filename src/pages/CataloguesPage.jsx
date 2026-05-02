@@ -228,14 +228,20 @@ const CataloguesPage = () => {
             <div className="p-6 flex flex-col flex-grow border-t border-slate-100 bg-white">
               <h3 className="font-black text-xl text-slate-900 mb-4 truncate">{cat.name}</h3>
               
-              <a 
-                href={cat.file_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="mt-auto w-full py-3 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
-              >
-                <Download size={18} /> Télécharger
-              </a>
+              {cat.file_url ? (
+                <a
+                  href={cat.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-auto w-full py-3 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
+                >
+                  <Download size={18} /> Télécharger
+                </a>
+              ) : (
+                <span className="mt-auto w-full py-3 bg-slate-100 text-slate-400 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed">
+                  <Download size={18} /> Fichier non disponible
+                </span>
+              )}
             </div>
 
             {/* Outils Admin */}
