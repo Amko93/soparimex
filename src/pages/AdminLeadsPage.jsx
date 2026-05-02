@@ -5,13 +5,8 @@ import { useToast } from '../context/ToastContext';
 import AdminNav from '../components/AdminNav';
 import {
   Loader,
-  LayoutGrid,
-  Mail,
-  Users,
-  History,
   UserCheck,
   Eye,
-  ClipboardList,
   Archive,
 } from 'lucide-react';
 
