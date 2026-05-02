@@ -8,6 +8,7 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -34,7 +35,10 @@ const DashboardPage = () => {
 
   useEffect(() => {
     fetchProfile();
-    const fallback = setTimeout(() => setLoading(false), 10000);
+    const fallback = setTimeout(() => {
+      setLoading(false);
+      setLoadError(true); // timeout dépassé → profil non chargé
+    }, 10000);
     return () => clearTimeout(fallback);
   }, []);
 
@@ -59,6 +63,7 @@ const DashboardPage = () => {
       });
     } catch (error) {
       console.error("Erreur:", error);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -145,6 +150,21 @@ const DashboardPage = () => {
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-site">
       <Loader className="animate-spin text-blue-600" size={40} />
+    </div>
+  );
+
+  if (loadError || !profile) return (
+    <div className="min-h-screen flex items-center justify-center bg-site px-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center max-w-md">
+        <p className="text-slate-700 font-bold text-lg mb-2">Impossible de charger votre profil.</p>
+        <p className="text-slate-500 text-sm mb-6">Vérifiez votre connexion et réessayez.</p>
+        <button
+          onClick={() => { setLoadError(false); setLoading(true); fetchProfile(); }}
+          className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition"
+        >
+          Réessayer
+        </button>
+      </div>
     </div>
   );
 
