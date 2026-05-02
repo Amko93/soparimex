@@ -108,7 +108,7 @@ const SubCategoryProductsPage = () => {
               Faire une demande
             </Link>
             <a
-              href="mailto:arezkiamir397@gmail.com"
+              href="mailto:contact@soparimex.com"
               className="inline-flex items-center justify-center gap-3 border-2 border-blue-800 text-blue-800 hover:bg-blue-50 font-bold px-8 py-4 rounded-2xl text-base transition-all"
             >
               <Mail size={20} />
