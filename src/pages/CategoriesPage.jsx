@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
-  const [session, setSession] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   
   // États Modales
@@ -22,7 +22,16 @@ const CategoriesPage = () => {
 
   useEffect(() => {
     fetchCategories();
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session?.user?.id) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      const role = (data?.role || '').toLowerCase();
+      setIsAdmin(role === 'admin' || role === 'developpeur');
+    });
   }, []);
 
   const fetchCategories = async () => {
@@ -132,7 +141,7 @@ const CategoriesPage = () => {
             </Link>
 
             {/* BOUTONS ADMIN (Modif/Suppr) - Apparaissent au survol */}
-            {session && (
+            {isAdmin && (
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
                 <button 
                   onClick={(e) => { e.preventDefault(); setEditingCategory(cat); setNewName(cat.name); setShowModal(true); }} 
@@ -152,7 +161,7 @@ const CategoriesPage = () => {
         ))}
 
         {/* CARTE D'AJOUT (Si Admin) */}
-        {session && (
+        {isAdmin && (
           <div 
             onClick={() => { setEditingCategory(null); setNewName(''); setNewImage(null); setShowModal(true); }} 
             className="min-h-[300px] border-2 border-dashed border-blue-200 bg-blue-50/50 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 hover:border-blue-500 transition-all text-blue-400 hover:text-blue-600 group gap-4"

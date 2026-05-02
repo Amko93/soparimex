@@ -8,7 +8,7 @@ const CategoryDetailsPage = () => {
   const { id } = useParams(); // ID de la catégorie parente
   const [category, setCategory] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
-  const [session, setSession] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // États Modales (Création / Modif)
@@ -24,7 +24,16 @@ const CategoryDetailsPage = () => {
 
   useEffect(() => {
     fetchData();
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session?.user?.id) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      const role = (data?.role || '').toLowerCase();
+      setIsAdmin(role === 'admin' || role === 'developpeur');
+    });
   }, [id]);
 
   const fetchData = async () => {
@@ -130,7 +139,7 @@ const CategoryDetailsPage = () => {
             </Link>
 
             {/* Outils Admin */}
-            {session && (
+            {isAdmin && (
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                 <button onClick={() => { setEditingSub(sub); setNewName(sub.name); setShowModal(true); }} className="bg-white p-2 rounded-xl text-slate-600 hover:text-blue-600 shadow-md"><Pencil size={16}/></button>
                 <button onClick={() => { setItemToDelete(sub.id); setShowDeleteConfirm(true); }} className="bg-white p-2 rounded-xl text-red-500 hover:bg-red-50 shadow-md"><Trash2 size={16}/></button>
@@ -140,7 +149,7 @@ const CategoryDetailsPage = () => {
         ))}
 
         {/* Bouton Création (Visible seulement si connecté) */}
-        {session && (
+        {isAdmin && (
           <div onClick={() => { setEditingSub(null); setNewName(''); setNewImage(null); setShowModal(true); }} className="min-h-[250px] border-2 border-dashed border-blue-200 bg-blue-50/50 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 hover:border-blue-500 transition-all text-blue-400 hover:text-blue-600 group gap-4">
             <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"><Plus size={28}/></div>
             <span className="font-bold">Ajouter une sous-catégorie</span>
