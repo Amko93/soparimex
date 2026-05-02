@@ -119,9 +119,32 @@ const CataloguesPage = () => {
     fetchCatalogues();
   };
 
+  // Extrait le chemin Storage depuis une URL publique Supabase
+  const extractStoragePath = (url) => {
+    if (!url) return null;
+    try {
+      const parts = new URL(url).pathname.split('/');
+      const bucketIndex = parts.indexOf('images');
+      if (bucketIndex === -1) return null;
+      return parts.slice(bucketIndex + 1).join('/');
+    } catch {
+      return null;
+    }
+  };
+
   const confirmDelete = async () => {
-    if (!itemToDelete) return;
-    await supabase.from('catalogues').delete().eq('id', itemToDelete);
+    if (!itemToDelete?.id) return;
+
+    // Supprimer le PDF et l'image de couverture du Storage
+    const filesToRemove = [
+      extractStoragePath(itemToDelete.file_url),
+      extractStoragePath(itemToDelete.image_url),
+    ].filter(Boolean);
+    if (filesToRemove.length > 0) {
+      await supabase.storage.from('images').remove(filesToRemove);
+    }
+
+    await supabase.from('catalogues').delete().eq('id', itemToDelete.id);
     setShowDeleteConfirm(false);
     setItemToDelete(null);
     fetchCatalogues();
@@ -219,7 +242,7 @@ const CataloguesPage = () => {
             {session && isAdmin && (
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                 <button onClick={() => openEditModal(cat)} className="bg-white p-2 rounded-lg text-slate-600 hover:text-blue-600 shadow-md border border-slate-100"><Pencil size={16}/></button>
-                <button onClick={() => { setItemToDelete(cat.id); setShowDeleteConfirm(true); }} className="bg-white p-2 rounded-lg text-red-500 hover:bg-red-50 shadow-md border border-slate-100"><Trash2 size={16}/></button>
+                <button onClick={() => { setItemToDelete(cat); setShowDeleteConfirm(true); }} className="bg-white p-2 rounded-lg text-red-500 hover:bg-red-50 shadow-md border border-slate-100"><Trash2 size={16}/></button>
               </div>
             )}
           </div>

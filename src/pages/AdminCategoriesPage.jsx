@@ -91,8 +91,28 @@ const AdminCategoriesPage = () => {
     setShowForm(true);
   };
 
+  // Extrait le chemin Storage depuis une URL publique Supabase
+  const extractStoragePath = (url) => {
+    if (!url) return null;
+    try {
+      const parts = new URL(url).pathname.split('/');
+      const bucketIndex = parts.indexOf('images');
+      if (bucketIndex === -1) return null;
+      return parts.slice(bucketIndex + 1).join('/');
+    } catch {
+      return null;
+    }
+  };
+
   const handleDelete = async () => {
     const table = view === 'categories' ? 'categories' : view === 'subcategories' ? 'subcategories' : 'products';
+
+    // Supprimer l'image du Storage avant la ligne BDD
+    if (activeItem.image_url) {
+      const path = extractStoragePath(activeItem.image_url);
+      if (path) await supabase.storage.from('images').remove([path]);
+    }
+
     const { error } = await supabase.from(table).delete().eq('id', activeItem.id);
     if (!error) {
       setShowDelete(false);
