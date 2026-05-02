@@ -49,6 +49,14 @@ const RegisterPage = () => {
       return;
     }
 
+    // Supabase retourne un succès apparent même si l'email existe déjà :
+    // dans ce cas data.user.identities est un tableau vide.
+    if (data?.user && data.user.identities?.length === 0) {
+      setMessage({ type: 'error', text: 'Un compte existe déjà avec cet email.' });
+      setLoading(false);
+      return;
+    }
+
     // CORRECTION CRITIQUE DE SÉCURITÉ B2B :
     // Supabase connecte automatiquement après inscription, ce qui contourne notre validation manuelle.
     // On force la déconnexion immédiate si l'inscription a réussi.
