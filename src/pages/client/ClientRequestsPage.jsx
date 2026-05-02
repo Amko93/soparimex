@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { Loader, ClipboardList, Eye, Package, ShoppingBag } from 'lucide-react';
@@ -8,6 +8,7 @@ const ClientRequestsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [userId, setUserId] = useState(null);
+  const fallbackTimerRef = useRef(null);
 
   useEffect(() => {
     const init = async () => {
@@ -23,9 +24,9 @@ const ClientRequestsPage = () => {
         setLoading(false);
       }
     };
+    fallbackTimerRef.current = setTimeout(() => { setError(true); setLoading(false); }, 10000);
     init();
-    const fallback = setTimeout(() => { setError(true); setLoading(false); }, 10000);
-    return () => clearTimeout(fallback);
+    return () => clearTimeout(fallbackTimerRef.current);
   }, []);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ const ClientRequestsPage = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      clearTimeout(fallbackTimerRef.current); // fetch réussi → annule le timer d'erreur
       setRequests(data || []);
     } catch (err) {
       console.error('Erreur chargement demandes:', err);

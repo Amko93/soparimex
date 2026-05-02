@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../context/ToastContext';
@@ -26,6 +26,7 @@ const AdminLeadsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const fallbackTimerRef = useRef(null);
   const [currentUser, setCurrentUser] = useState(null); // { id, role }
   const [filter, setFilter] = useState(() => {
     // Par défaut : "Nouveaux Leads" pour commercial, "Dossiers en cours" pour admin/dev
@@ -37,9 +38,9 @@ const AdminLeadsPage = () => {
   }, []);
 
   useEffect(() => {
+    fallbackTimerRef.current = setTimeout(() => { setError(true); setLoading(false); }, 10000);
     fetchLeads();
-    const fallback = setTimeout(() => { setError(true); setLoading(false); }, 10000);
-    return () => clearTimeout(fallback);
+    return () => clearTimeout(fallbackTimerRef.current);
   }, []);
 
   // Ajuster le filtre par défaut selon le rôle après chargement
@@ -74,6 +75,7 @@ const AdminLeadsPage = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      clearTimeout(fallbackTimerRef.current); // fetch réussi → annule le timer d'erreur
       setLeads(rows || []);
 
       const list = rows || [];
