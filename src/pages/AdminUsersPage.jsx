@@ -4,11 +4,8 @@ import { supabase } from '../supabaseClient';
 import { useToast } from '../context/ToastContext';
 import AdminNav from '../components/AdminNav';
 import {
-  ArrowLeft,
   Users,
   Loader,
-  LayoutGrid,
-  Mail,
   UserCheck,
   Pencil,
   Trash2,
