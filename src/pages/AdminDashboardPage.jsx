@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { useToast } from '../context/ToastContext';
 import AdminNav from '../components/AdminNav';
 import {
   Users,
@@ -10,7 +11,6 @@ import {
   ChevronRight,
   Plus,
   UserCog,
-  MessageSquare,
   History,
   Loader,
   AlertCircle,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [adminName, setAdminName] = useState('');
@@ -28,7 +29,7 @@ const AdminDashboardPage = () => {
     totalUsers: 0,
     pendingUsers: 0,
     unclaimedLeads: 0,
-    unreadMessages: 0,
+    newLeads: 0,
   });
   const [lastUsers, setLastUsers] = useState([]);
   const [notifEmail, setNotifEmail] = useState('');
@@ -73,7 +74,7 @@ const AdminDashboardPage = () => {
           .select('*', { count: 'exact', head: true })
           .or('role.eq.pending,is_validated.eq.false'),
         supabase.from('lead_requests').select('*', { count: 'exact', head: true }).is('assigned_to', null),
-        supabase.from('messages').select('*', { count: 'exact', head: true }).eq('statut', 'nouveau'),
+        supabase.from('lead_requests').select('*', { count: 'exact', head: true }).eq('status', 'nouveau'),
         supabase
           .from('profiles')
           .select('id, full_name, societe, created_at, role, is_validated')
@@ -85,7 +86,7 @@ const AdminDashboardPage = () => {
         totalUsers: totalUsersRes.count ?? 0,
         pendingUsers: pendingUsersRes.count ?? 0,
         unclaimedLeads: unclaimedLeadsRes.count ?? 0,
-        unreadMessages: unreadMessagesRes.count ?? 0,
+        newLeads: unreadMessagesRes.count ?? 0,
       });
       setLastUsers(lastUsersRes.data ?? []);
 
@@ -114,19 +115,20 @@ const AdminDashboardPage = () => {
       notificationEmail: notifEmail.trim(),
       defaultProductDesc: defaultProductDesc.trim(),
     };
-    await supabase.from('site_settings').update({ texts: updatedTexts }).eq('id', 'main');
+    const { error: saveError } = await supabase
+      .from('site_settings')
+      .update({ texts: updatedTexts })
+      .eq('id', 'main');
 
-    // Mettre à jour la description de tous les produits existants
-    if (defaultProductDesc.trim()) {
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({ description: defaultProductDesc.trim() })
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-      if (updateError) console.error('Erreur maj produits:', updateError);
+    if (saveError) {
+      console.error('Erreur sauvegarde paramètres:', saveError);
+      setSettingsSaving(false);
+      return;
     }
 
     setSettingsSaving(false);
     setSettingsSaved(true);
+    toast('Paramètres enregistrés avec succès.', 'success');
     setTimeout(() => setSettingsSaved(false), 3000);
   };
 
@@ -249,15 +251,15 @@ const AdminDashboardPage = () => {
             </div>
           </div>
 
-          <div className={`bg-white rounded-2xl shadow-sm border p-6 flex items-center gap-4 ${stats.unreadMessages > 0 ? 'border-violet-200 bg-violet-50/40' : 'border-slate-100'}`}>
-            <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${stats.unreadMessages > 0 ? 'bg-violet-500 text-white' : 'bg-violet-100'}`}>
-              <Mail className={stats.unreadMessages > 0 ? 'text-white' : 'text-violet-600'} size={28} />
+          <div className={`bg-white rounded-2xl shadow-sm border p-6 flex items-center gap-4 ${stats.newLeads > 0 ? 'border-violet-200 bg-violet-50/40' : 'border-slate-100'}`}>
+            <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${stats.newLeads > 0 ? 'bg-violet-500 text-white' : 'bg-violet-100'}`}>
+              <Mail className={stats.newLeads > 0 ? 'text-white' : 'text-violet-600'} size={28} />
             </div>
             <div>
-              <p className={`text-3xl font-bold ${stats.unreadMessages > 0 ? 'text-violet-600' : 'text-slate-900'}`}>
-                {stats.unreadMessages}
+              <p className={`text-3xl font-bold ${stats.newLeads > 0 ? 'text-violet-600' : 'text-slate-900'}`}>
+                {stats.newLeads}
               </p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Messages non lus</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Nouveaux dossiers</p>
             </div>
           </div>
         </section>
@@ -342,15 +344,6 @@ const AdminDashboardPage = () => {
                 <span className="text-center leading-tight">Gérer les utilisateurs</span>
               </Link>
               <Link
-                to="/admin/messages"
-                className="flex flex-col items-center justify-center gap-3 p-5 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-semibold text-sm hover:shadow-md hover:-translate-y-1 transition-all"
-              >
-                <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center">
-                  <MessageSquare className="text-violet-600" size={24} />
-                </div>
-                <span className="text-center leading-tight">Voir les messages</span>
-              </Link>
-              <Link
                 to="/admin/leads"
                 className="flex flex-col items-center justify-center gap-3 p-5 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-semibold text-sm hover:shadow-md hover:-translate-y-1 transition-all"
               >
@@ -392,7 +385,7 @@ const AdminDashboardPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
-                Description par défaut des produits
+                Description par défaut des produits (nouveaux uniquement)
               </label>
               <textarea
                 value={defaultProductDesc}
@@ -401,7 +394,7 @@ const AdminDashboardPage = () => {
                 rows={3}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 font-medium resize-none"
               />
-              <p className="text-xs text-slate-400 mt-1">Cette description sera appliquée automatiquement aux nouveaux produits si vous ne remplissez pas le champ description.</p>
+              <p className="text-xs text-slate-400 mt-1">Pré-remplit le champ description lors de la création d'un nouveau produit. N'affecte pas les produits existants.</p>
             </div>
             <div className="flex items-center gap-4">
               <button

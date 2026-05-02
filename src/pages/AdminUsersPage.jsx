@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../context/ToastContext';
 import AdminNav from '../components/AdminNav';
@@ -21,6 +21,7 @@ import {
 
 const AdminUsersPage = () => {
   const toast = useToast();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -297,7 +298,11 @@ const AdminUsersPage = () => {
                       const showActions = !isSelf && !isAdmin;
 
                       return (
-                        <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
+                        <tr
+                          key={user.id}
+                          className="hover:bg-blue-50/40 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/admin/users/${user.id}`)}
+                        >
                           <td className="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">{formatDate(user.created_at)}</td>
                           <td className="px-4 py-4 font-semibold text-slate-800">{user.full_name || '—'}</td>
                           <td className="px-4 py-4 text-sm text-slate-600">{user.societe || '—'}</td>
@@ -318,7 +323,7 @@ const AdminUsersPage = () => {
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-4 text-right min-w-[120px]">
+                          <td className="px-4 py-4 text-right min-w-[120px]" onClick={(e) => e.stopPropagation()}>
                             {showActions ? (
                               <div className="flex items-center justify-end gap-1 flex-wrap">
                                 {isPending(user) && (

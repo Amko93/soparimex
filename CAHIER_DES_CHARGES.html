@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cahier des charges — Soparimex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; min-height: 100vh; }
+
+    header { background: #0f172a; color: white; padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    header h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+    header span { font-size: 0.85rem; color: #94a3b8; }
+
+    .progress-bar { background: #1e293b; border-radius: 0; padding: 12px 40px; display: flex; align-items: center; gap: 16px; }
+    .progress-track { flex: 1; height: 8px; background: #334155; border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 99px; transition: width 0.4s ease; }
+    .progress-label { font-size: 0.8rem; color: #94a3b8; white-space: nowrap; }
+    .progress-counts { display: flex; gap: 16px; font-size: 0.78rem; }
+    .progress-counts span { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+    .container { max-width: 960px; margin: 32px auto; padding: 0 24px 80px; }
+
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .filter-btn { padding: 6px 16px; border-radius: 99px; border: 2px solid transparent; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.15s; background: white; color: #64748b; border-color: #e2e8f0; }
+    .filter-btn.active { background: #1e40af; color: white; border-color: #1e40af; }
+    .filter-btn:hover:not(.active) { border-color: #94a3b8; }
+
+    .section { margin-bottom: 32px; }
+    .section-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 12px; padding-left: 4px; }
+
+    .card { background: white; border-radius: 16px; border: 2px solid transparent; margin-bottom: 10px; overflow: hidden; transition: all 0.2s; }
+    .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .card.done { opacity: 0.55; }
+    .card.done .card-title { text-decoration: line-through; color: #94a3b8; }
+
+    .card-header { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; cursor: pointer; }
+    .priority-badge { flex-shrink: 0; font-size: 1.1rem; margin-top: 1px; }
+    .card-body { flex: 1; }
+    .card-title { font-weight: 700; font-size: 0.95rem; line-height: 1.4; margin-bottom: 4px; }
+    .card-meta { font-size: 0.78rem; color: #64748b; }
+    .card-meta strong { color: #475569; }
+
+    .status-group { flex-shrink: 0; display: flex; gap: 6px; align-items: center; }
+    .status-btn { padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 800; border: none; cursor: pointer; transition: all 0.15s; opacity: 0.35; }
+    .status-btn.active { opacity: 1; }
+    .status-btn.todo  { background: #fee2e2; color: #dc2626; }
+    .status-btn.wip   { background: #fef3c7; color: #d97706; }
+    .status-btn.done  { background: #dcfce7; color: #16a34a; }
+
+    .card-detail { padding: 0 18px 16px 50px; }
+    .card-detail textarea { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 0.82rem; font-family: inherit; resize: vertical; outline: none; min-height: 70px; color: #475569; transition: border-color 0.15s; }
+    .card-detail textarea:focus { border-color: #3b82f6; }
+    .note-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+
+    .card[data-priority="critical"] { border-color: #fecaca; }
+    .card[data-priority="critical"] .card-header { background: #fff5f5; }
+    .card[data-priority="medium"] { border-color: #fed7aa; }
+    .card[data-priority="medium"] .card-header { background: #fffaf5; }
+    .card[data-priority="minor"] { border-color: #e2e8f0; }
+    .card[data-priority="minor"] .card-header { background: #f8fafc; }
+
+    .hidden { display: none !important; }
+
+    .export-btn { position: fixed; bottom: 24px; right: 24px; background: #1e40af; color: white; border: none; padding: 12px 22px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 16px rgba(30,64,175,0.4); transition: all 0.2s; }
+    .export-btn:hover { background: #1d3a9e; transform: translateY(-1px); }
+
+    @media (max-width: 600px) {
+      header { padding: 20px; }
+      .container { padding: 0 12px 80px; }
+      .status-group { flex-direction: column; gap: 4px; }
+      .card-header { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📋 Cahier des charges — Soparimex</h1>
+    <span>Audit technique · Bugs &amp; améliorations</span>
+  </div>
+  <div id="last-updated" style="font-size:0.78rem;color:#64748b;"></div>
+</header>
+
+<div class="progress-bar">
+  <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="progress-counts">
+    <span><span class="dot" style="background:#dc2626"></span><span id="count-todo">0</span> à faire</span>
+    <span><span class="dot" style="background:#d97706"></span><span id="count-wip">0</span> en cours</span>
+    <span><span class="dot" style="background:#16a34a"></span><span id="count-done">0</span> terminés</span>
+  </div>
+  <div class="progress-label" id="progress-label">0% terminé</div>
+</div>
+
+<div class="container">
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all')">Tout voir</button>
+    <button class="filter-btn" onclick="setFilter('critical')">🔴 Critiques</button>
+    <button class="filter-btn" onclick="setFilter('medium')">🟠 Moyens</button>
+    <button class="filter-btn" onclick="setFilter('minor')">🟡 Mineurs</button>
+    <button class="filter-btn" onclick="setFilter('todo')">À faire</button>
+    <button class="filter-btn" onclick="setFilter('wip')">En cours</button>
+    <button class="filter-btn" onclick="setFilter('done')">Terminés</button>
+  </div>
+
+  <div id="cards-container"></div>
+</div>
+
+<button class="export-btn" onclick="exportMD()">⬇ Exporter en Markdown</button>
+
+<script>
+const ITEMS = [
+  // ─── CRITIQUES ───
+  {
+    id: "c1",
+    priority: "critical",
+    emoji: "🔴",
+    title: "AdminDashboardPage — Sauvegarde des paramètres écrase la description de TOUS les produits",
+    file: "src/pages/AdminDashboardPage.jsx",
+    line: "121–125",
+    detail: "La fonction saveSettings fait un UPDATE sans filtre sur toute la table products, effaçant toutes les descriptions existantes. Corriger en retirant la mise à jour des produits de cette fonction, ou en ajoutant un filtre strict.",
+  },
+  {
+    id: "c2",
+    priority: "critical",
+    emoji: "🔴",
+    title: "AdminUsersPage — Suppression d'un utilisateur ne supprime pas son compte Auth",
+    file: "src/pages/AdminUsersPage.jsx",
+    line: "117–129",
+    detail: "La suppression efface seulement la ligne dans la table profiles. Le compte auth.users Supabase reste actif : l'utilisateur peut toujours se connecter. Il faut appeler l'Admin API Supabase (supabase.auth.admin.deleteUser) ou une Edge Function pour supprimer l'auth user.",
+  },
+  {
+    id: "c3",
+    priority: "critical",
+    emoji: "🔴",
+    title: "CategoriesPage & CategoryDetailsPage — Boutons admin visibles pour tout utilisateur connecté",
+    file: "src/pages/CategoriesPage.jsx · CategoryDetailsPage.jsx",
+    line: "25, 135 / 27, 133",
+    detail: "La condition if(session) affiche les boutons Modifier/Supprimer/Créer à n'importe quel client connecté. Remplacer par if(session && (userRole === 'admin' || userRole === 'developpeur')) après avoir chargé le rôle depuis Supabase.",
+  },
+
+  // ─── MOYENS ───
+  {
+    id: "m1",
+    priority: "medium",
+    emoji: "🟠",
+    title: "Header — Injection PostgREST possible via le champ de recherche",
+    file: "src/components/Header.jsx",
+    line: "62–66",
+    detail: "Le searchTerm est interpolé directement dans la chaîne .or(). Un caractère ',' ou ')' peut casser le filtre. Utiliser deux appels .ilike() séparés chaînés avec .or() via l'API objet Supabase plutôt qu'une chaîne.",
+  },
+  {
+    id: "m2",
+    priority: "medium",
+    emoji: "🟠",
+    title: "Header — searchRef partagé entre desktop et mobile",
+    file: "src/components/Header.jsx",
+    line: "129, 258",
+    detail: "Les deux champs de recherche (desktop et mobile) utilisent la même ref. Le handleClickOutside ne fonctionne que sur le dernier élément monté. Créer deux refs distinctes : searchRefDesktop et searchRefMobile.",
+  },
+  {
+    id: "m3",
+    priority: "medium",
+    emoji: "🟠",
+    title: "AdminLeadsPage & ClientRequestsPage — Bouton 'Réessayer' persistant après chargement réussi",
+    file: "src/pages/AdminLeadsPage.jsx · ClientRequestsPage.jsx",
+    line: "39–41 / 27",
+    detail: "Le timeout 10s pose setError(true) mais fetchLeads peut réussir après. L'état error n'est jamais remis à false dans ce cas. Corriger en nettoyant le timeout si fetchLeads réussit (clearTimeout dans le try ou via un AbortController).",
+  },
+  {
+    id: "m4",
+    priority: "medium",
+    emoji: "🟠",
+    title: "DashboardPage — Mot de passe changeable sans connaître l'ancien",
+    file: "src/pages/DashboardPage.jsx",
+    line: "116",
+    detail: "Le champ 'mot de passe actuel' est affiché dans le formulaire mais n'est jamais vérifié ni envoyé. Un tiers ayant accès à l'appareil peut changer le mot de passe librement. Vérifier l'ancien mdp avant d'appeler updateUser ou au moins l'envoyer à Supabase.",
+  },
+  {
+    id: "m5",
+    priority: "medium",
+    emoji: "🟠",
+    title: "DashboardPage — Incohérence longueur minimum mot de passe (6 vs 8)",
+    file: "src/pages/DashboardPage.jsx · RegisterPage.jsx",
+    line: "105 / 18",
+    detail: "RegisterPage exige 8 caractères minimum mais DashboardPage affiche '6 caractères minimum'. Harmoniser à 8 caractères dans les deux fichiers.",
+  },
+  {
+    id: "m6",
+    priority: "medium",
+    emoji: "🟠",
+    title: "RegisterPage — Email déjà utilisé retourne 'compte créé' à tort",
+    file: "src/pages/RegisterPage.jsx",
+    line: "33",
+    detail: "Supabase retourne un succès même pour un email existant (data.user.identities est vide). Vérifier data.user.identities?.length === 0 après signUp et afficher un message 'Un compte existe déjà avec cet email'.",
+  },
+  {
+    id: "m7",
+    priority: "medium",
+    emoji: "🟠",
+    title: "RegisterPage — Email non validé dans validateStep1",
+    file: "src/pages/RegisterPage.jsx",
+    line: "19",
+    detail: "La fonction validateStep1 vérifie SIRET, mdp, téléphone, mais pas le format de l'email. Un email invalide peut passer à l'étape 2. Ajouter une regex ou le champ type='email' dans la validation JS.",
+  },
+  {
+    id: "m8",
+    priority: "medium",
+    emoji: "🟠",
+    title: "SelectionPage — Pas de transaction : lead_request orphelin si l'insert items échoue",
+    file: "src/pages/SelectionPage.jsx",
+    line: "60–65",
+    detail: "Le lead_request est créé en BDD avant l'insert des items. Si l'insert échoue (erreur réseau, RLS), le lead existe sans aucun produit. Utiliser une Edge Function avec transaction, ou au minimum supprimer le lead si l'insert des items échoue (rollback manuel).",
+  },
+  {
+    id: "m9",
+    priority: "medium",
+    emoji: "🟠",
+    title: "AdminDashboardPage — saveSettings sans gestion d'erreur",
+    file: "src/pages/AdminDashboardPage.jsx",
+    line: "108",
+    detail: "La fonction saveSettings n'a pas de try/catch. En cas d'erreur SQL ou réseau, l'UI affiche quand même 'Enregistré' (ou ne dit rien). Ajouter try/catch et un toast d'erreur.",
+  },
+  {
+    id: "m10",
+    priority: "medium",
+    emoji: "🟠",
+    title: "AdminLeadsArchivePage — Spinner infini si loadCurrentUser échoue",
+    file: "src/pages/admin/AdminLeadsArchivePage.jsx",
+    line: "26",
+    detail: "Si loadCurrentUser ne renvoie pas de session, setLoading(false) n'est jamais appelé et la page reste bloquée sur un loader infini. Ajouter un setLoading(false) dans le finally du loadCurrentUser.",
+  },
+  {
+    id: "m11",
+    priority: "medium",
+    emoji: "🟠",
+    title: "AdminCategoriesPage — Re-fetch en boucle potentiel (objet dans les deps)",
+    file: "src/pages/AdminCategoriesPage.jsx",
+    line: "42",
+    detail: "useEffect(..., [view, selection]) — selection est un objet recréé à chaque render, ce qui peut déclencher des re-fetch inutiles. Utiliser selection.category?.id et selection.subcategory?.id comme dépendances primitives.",
+  },
+  {
+    id: "m12",
+    priority: "medium",
+    emoji: "🟠",
+    title: "AdminCategoriesPage & CataloguesPage — Erreur upload non vérifiée",
+    file: "src/pages/AdminCategoriesPage.jsx · CataloguesPage.jsx",
+    line: "213 / 65",
+    detail: "Après l'appel supabase.storage.upload(), le code génère immédiatement un publicUrl sans vérifier si l'upload a réussi. Un fichier non uploadé aura une URL cassée stockée en BDD. Vérifier l'erreur retournée par upload() avant de générer l'URL.",
+  },
+  {
+    id: "m13",
+    priority: "medium",
+    emoji: "🟠",
+    title: "CataloguesPage — Suppression entité ne supprime pas le fichier du Storage",
+    file: "src/pages/CataloguesPage.jsx",
+    line: "122",
+    detail: "Quand on supprime un catalogue, le fichier PDF et l'image de couverture restent dans le bucket Storage. Appeler supabase.storage.from('images').remove([fileName]) avant ou après la suppression en BDD.",
+  },
+  {
+    id: "m14",
+    priority: "medium",
+    emoji: "🟠",
+    title: "ProtectedRoute — signOut() forcé si compte non validé",
+    file: "src/components/ProtectedRoute.jsx",
+    line: "53",
+    detail: "Si is_validated=false, ProtectedRoute appelle supabase.auth.signOut() avant de rediriger. Cela déconnecte l'utilisateur brutalement. Remplacer par un simple <Navigate to='/pending-validation'> sans signOut.",
+  },
+
+  // ─── MINEURS ───
+  {
+    id: "n1",
+    priority: "minor",
+    emoji: "🟡",
+    title: "ToastContext — ID de toast basé sur Date.now() (collision possible)",
+    file: "src/context/ToastContext.jsx",
+    line: "22",
+    detail: "Si deux toasts sont créés dans la même milliseconde, ils ont le même id → warning React 'duplicate key'. Remplacer par crypto.randomUUID() ou un compteur via useRef.",
+  },
+  {
+    id: "n2",
+    priority: "minor",
+    emoji: "🟡",
+    title: "ToastContext — setTimeout jamais nettoyé si dismiss manuel",
+    file: "src/context/ToastContext.jsx",
+    line: "24",
+    detail: "Quand l'utilisateur ferme un toast manuellement, le setTimeout continue de tourner. Stocker les IDs de timers dans un ref Map et les annuler dans dismiss().",
+  },
+  {
+    id: "n3",
+    priority: "minor",
+    emoji: "🟡",
+    title: "SubCategoryProductsPage — Email hardcodé (dev) au lieu de contact@soparimex.com",
+    file: "src/pages/SubCategoryProductsPage.jsx",
+    line: "111",
+    detail: "Le bouton mailto: pointe sur arezkiamir397@gmail.com. Remplacer par contact@soparimex.com pour être cohérent avec le reste du site (ContactPage, Footer).",
+  },
+  {
+    id: "n4",
+    priority: "minor",
+    emoji: "🟡",
+    title: "CataloguesPage — Lien PDF sans vérification null",
+    file: "src/pages/CataloguesPage.jsx",
+    line: "207",
+    detail: "<a href={cat.file_url}> sans vérifier si file_url est null → ouvre about:blank. Conditionner l'affichage du bouton de téléchargement à file_url !== null.",
+  },
+  {
+    id: "n5",
+    priority: "minor",
+    emoji: "🟡",
+    title: "AdminUsersPage — Imports inutilisés",
+    file: "src/pages/AdminUsersPage.jsx",
+    line: "13–15",
+    detail: "ArrowLeft, LayoutGrid, Mail sont importés depuis lucide-react mais jamais utilisés dans le JSX. Les supprimer pour garder le code propre.",
+  },
+  {
+    id: "n6",
+    priority: "minor",
+    emoji: "🟡",
+    title: "AdminLeadsPage — Imports inutilisés",
+    file: "src/pages/AdminLeadsPage.jsx",
+    line: "9–15",
+    detail: "LayoutGrid, Mail, Users, History, ClipboardList sont importés mais jamais utilisés. Les supprimer.",
+  },
+  {
+    id: "n7",
+    priority: "minor",
+    emoji: "🟡",
+    title: "Header — fetchRole sans gestion d'erreur",
+    file: "src/components/Header.jsx",
+    line: "23–26",
+    detail: "Si la requête fetchRole échoue (réseau, RLS), userRole reste à 'client' → un admin voit un header sans ses boutons admin jusqu'au rechargement. Ajouter un catch et retry léger.",
+  },
+  {
+    id: "n8",
+    priority: "minor",
+    emoji: "🟡",
+    title: "LoginPage — Message d'erreur trop générique",
+    file: "src/pages/LoginPage.jsx",
+    line: "79",
+    detail: "Mauvais mot de passe, email inconnu, et erreur réseau affichent tous le même message 'Erreur de connexion'. Distinguer au moins 'Email ou mot de passe incorrect' des erreurs techniques.",
+  },
+  {
+    id: "n9",
+    priority: "minor",
+    emoji: "🟡",
+    title: "DashboardPage — Écran vide si profil null après timeout",
+    file: "src/pages/DashboardPage.jsx",
+    line: "34",
+    detail: "Après le timeout 10s, si profile reste null, la page s'affiche vide sans message d'erreur. Ajouter un état d'erreur et un message 'Impossible de charger votre profil'.",
+  },
+  {
+    id: "n10",
+    priority: "minor",
+    emoji: "🟡",
+    title: "ClientRequestDetailsPage — Scroll auto empêche de relire les anciens messages",
+    file: "src/pages/client/ClientRequestDetailsPage.jsx",
+    line: "29",
+    detail: "scrollIntoView est appelé à chaque changement de messages[], même si l'utilisateur était remonté pour relire. Conditionner le scroll : ne l'exécuter que si l'utilisateur est déjà en bas (vérifier scrollTop + clientHeight vs scrollHeight).",
+  },
+  {
+    id: "n11",
+    priority: "minor",
+    emoji: "🟡",
+    title: "Images — attribut alt vide sur plusieurs composants",
+    file: "src/components/Header.jsx · AdminCategoriesPage.jsx · etc.",
+    line: "164, 286",
+    detail: "Plusieurs <img> ont alt='' vide. Pour l'accessibilité, les images décoratives doivent avoir role='presentation' ou alt='' + aria-hidden='true'. Les images significatives doivent avoir un alt descriptif.",
+  },
+  {
+    id: "n12",
+    priority: "minor",
+    emoji: "🟡",
+    title: "Plusieurs pages — setTimeout sans cleanup (setState sur composant démonté)",
+    file: "DashboardPage.jsx · LoginPage.jsx · AdminDashboardPage.jsx",
+    line: "varies",
+    detail: "Des setTimeout sans clearTimeout dans le return du useEffect peuvent tenter de mettre à jour l'état d'un composant déjà démonté. Stocker les IDs et les nettoyer dans le cleanup du useEffect.",
+  },
+  {
+    id: "n13",
+    priority: "minor",
+    emoji: "🟡",
+    title: "Storage — Images catégories/sous-catégories jamais supprimées",
+    file: "src/pages/CategoriesPage.jsx · CategoryDetailsPage.jsx",
+    line: "handleSave / confirmDelete",
+    detail: "À la suppression d'une catégorie ou sous-catégorie, l'image associée reste dans le bucket Storage. Extraire le nom du fichier depuis l'URL et appeler supabase.storage.remove() lors de la suppression.",
+  },
+  {
+    id: "n14",
+    priority: "minor",
+    emoji: "🟡",
+    title: "AdminCategoriesPage — handleDelete sans feedback utilisateur",
+    file: "src/pages/AdminCategoriesPage.jsx",
+    line: "94",
+    detail: "Si la suppression échoue (contrainte FK, erreur réseau), aucun message n'est affiché. Ajouter un toast d'erreur dans le cas où error est non null.",
+  },
+  {
+    id: "n15",
+    priority: "minor",
+    emoji: "🟡",
+    title: "App.jsx — Indentation ToastProvider cassée",
+    file: "src/App.jsx",
+    line: "44–96",
+    detail: "L'imbrication JSX de ToastProvider/SelectionProvider/ThemeProvider est mal indentée. Purement cosmétique mais nuit à la lisibilité. Réindenter correctement.",
+  },
+];
+
+// ── State ──────────────────────────────────────────────
+let state = {};
+let currentFilter = 'all';
+
+function loadState() {
+  try { state = JSON.parse(localStorage.getItem('cdc_soparimex') || '{}'); }
+  catch { state = {}; }
+}
+
+function saveState() {
+  localStorage.setItem('cdc_soparimex', JSON.stringify(state));
+  document.getElementById('last-updated').textContent = 'Sauvegardé à ' + new Date().toLocaleTimeString('fr-FR');
+}
+
+function getItemState(id) {
+  return state[id] || { status: 'todo', note: '' };
+}
+
+// ── Render ─────────────────────────────────────────────
+function render() {
+  const container = document.getElementById('cards-container');
+  container.innerHTML = '';
+
+  const groups = [
+    { key: 'critical', label: '🔴 Critiques — Corriger immédiatement' },
+    { key: 'medium',   label: '🟠 Moyens — Bugs UX ou sécurité' },
+    { key: 'minor',    label: '🟡 Mineurs — Qualité & polish' },
+  ];
+
+  groups.forEach(({ key, label }) => {
+    const items = ITEMS.filter(i => {
+      if (i.priority !== key) return false;
+      if (currentFilter === 'all' || currentFilter === key) return true;
+      if (['todo','wip','done'].includes(currentFilter)) return getItemState(i.id).status === currentFilter;
+      return false;
+    });
+
+    if (items.length === 0) return;
+
+    const section = document.createElement('div');
+    section.className = 'section';
+    section.innerHTML = `<div class="section-title">${label}</div>`;
+
+    items.forEach(item => {
+      const s = getItemState(item.id);
+      const card = document.createElement('div');
+      card.className = `card${s.status === 'done' ? ' done' : ''}`;
+      card.dataset.priority = item.priority;
+      card.innerHTML = `
+        <div class="card-header" onclick="toggleDetail('${item.id}')">
+          <div class="priority-badge">${item.emoji}</div>
+          <div class="card-body">
+            <div class="card-title">${item.title}</div>
+            <div class="card-meta"><strong>${item.file}</strong>${item.line ? ' · Ligne ' + item.line : ''}</div>
+          </div>
+          <div class="status-group" onclick="event.stopPropagation()">
+            <button class="status-btn todo ${s.status==='todo'?'active':''}" onclick="setStatus('${item.id}','todo')">À faire</button>
+            <button class="status-btn wip ${s.status==='wip'?'active':''}"  onclick="setStatus('${item.id}','wip')">En cours</button>
+            <button class="status-btn done ${s.status==='done'?'active':''}" onclick="setStatus('${item.id}','done')">Terminé</button>
+          </div>
+        </div>
+        <div class="card-detail" id="detail-${item.id}" style="display:none">
+          <p style="font-size:0.85rem;color:#475569;margin-bottom:12px;line-height:1.6">${item.detail}</p>
+          <div class="note-label">Notes</div>
+          <textarea placeholder="Ajouter une note, une solution, une PR..." onchange="setNote('${item.id}',this.value)">${s.note || ''}</textarea>
+        </div>
+      `;
+      section.appendChild(card);
+    });
+
+    container.appendChild(section);
+  });
+
+  updateProgress();
+}
+
+function toggleDetail(id) {
+  const el = document.getElementById('detail-' + id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function setStatus(id, status) {
+  state[id] = { ...getItemState(id), status };
+  saveState();
+  render();
+}
+
+function setNote(id, note) {
+  state[id] = { ...getItemState(id), note };
+  saveState();
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  render();
+}
+
+function updateProgress() {
+  const total = ITEMS.length;
+  const done  = ITEMS.filter(i => getItemState(i.id).status === 'done').length;
+  const wip   = ITEMS.filter(i => getItemState(i.id).status === 'wip').length;
+  const todo  = total - done - wip;
+  const pct   = Math.round((done / total) * 100);
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = pct + '% terminé';
+  document.getElementById('count-todo').textContent = todo;
+  document.getElementById('count-wip').textContent  = wip;
+  document.getElementById('count-done').textContent = done;
+}
+
+function exportMD() {
+  const lines = ['# Cahier des charges — Soparimex\n', `Exporté le ${new Date().toLocaleDateString('fr-FR')}\n`];
+  const groups = [
+    { key: 'critical', label: '## 🔴 Critiques' },
+    { key: 'medium',   label: '## 🟠 Moyens' },
+    { key: 'minor',    label: '## 🟡 Mineurs' },
+  ];
+  groups.forEach(({ key, label }) => {
+    lines.push('\n' + label + '\n');
+    ITEMS.filter(i => i.priority === key).forEach(item => {
+      const s = getItemState(item.id);
+      const icon = s.status === 'done' ? '✅' : s.status === 'wip' ? '⏳' : '⬜';
+      lines.push(`${icon} **${item.title}**`);
+      lines.push(`   - Fichier: \`${item.file}\`${item.line ? ' · Ligne ' + item.line : ''}`);
+      lines.push(`   - Statut: ${s.status === 'done' ? 'Terminé' : s.status === 'wip' ? 'En cours' : 'À faire'}`);
+      if (s.note) lines.push(`   - Note: ${s.note}`);
+      lines.push('');
+    });
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cahier-des-charges-soparimex.md';
+  a.click();
+}
+
+// ── Init ───────────────────────────────────────────────
+loadState();
+render();
+const saved = localStorage.getItem('cdc_soparimex');
+if (saved) document.getElementById('last-updated').textContent = 'Dernière sauvegarde chargée';
+</script>
+</body>
+</html>

@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext'; 
-import { Search, User, LogIn, LogOut, LayoutDashboard, X, Loader, Package, Menu, ShoppingBag, ClipboardList, FileText, Mail } from 'lucide-react';
+import { Search, User, LogIn, LogOut, LayoutDashboard, X, Loader, Package, Menu, ClipboardList, FileText } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { useSelection } from '../context/SelectionContext';
 
 const Header = () => {
   const { texts, colors } = useTheme();
-  const { selectedItems } = useSelection();
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
   const [userRole, setUserRole] = useState('client');
@@ -194,24 +192,11 @@ const Header = () => {
                     <ClipboardList size={20} />
                   </Link>
                 )}
-                {(userRole === 'admin' || userRole === 'developpeur' || userRole === 'commercial') && (
-                  <Link to="/admin/messages" className="p-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl hover:bg-purple-50 hover:border-purple-200 hover:text-purple-600 transition-all" title="Messages contact">
-                    <Mail size={20} />
-                  </Link>
-                )}
                 {(userRole === 'client' || userRole === 'admin' || userRole === 'developpeur' || userRole === 'commercial') && (
                   <Link to="/mes-demandes" className="p-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl hover:bg-slate-50 transition-all" title="Mes demandes">
                     <FileText size={20} />
                   </Link>
                 )}
-                <Link to="/selection" className="p-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-all relative" title="Ma sélection">
-                  <ShoppingBag size={20} />
-                  {selectedItems.length > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-blue-600 text-white text-[10px] font-bold rounded-full px-1">
-                      {selectedItems.length > 99 ? '99+' : selectedItems.length}
-                    </span>
-                  )}
-                </Link>
                 <Link to="/dashboard" className="p-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl hover:bg-slate-50 transition-all">
                   <User size={20} />
                 </Link>
@@ -351,13 +336,6 @@ const Header = () => {
                     </Link>
                   )}
                   <Link 
-                    to="/selection" 
-                    onClick={() => setIsMobileMenuOpen(false)} 
-                    className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition-colors"
-                  >
-                    <ShoppingBag size={20} /> Ma sélection {selectedItems.length > 0 && `(${selectedItems.length})`}
-                  </Link>
-                  <Link 
                     to="/dashboard" 
                     onClick={() => setIsMobileMenuOpen(false)} 
                     className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition-colors"
@@ -380,15 +358,6 @@ const Header = () => {
                       className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                     >
                       <ClipboardList size={20} /> Demandes clients
-                    </Link>
-                  )}
-                  {(userRole === 'admin' || userRole === 'developpeur' || userRole === 'commercial') && (
-                    <Link
-                      to="/admin/messages"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 transition-colors"
-                    >
-                      <Mail size={20} /> Messages contact
                     </Link>
                   )}
                   <button

@@ -5,23 +5,27 @@ import { useToast } from '../../context/ToastContext';
 import {
   ArrowLeft,
   Loader,
-  Package,
   Send,
   MessageCircle,
   User,
+  Paperclip,
+  X,
+  FileText,
+  Download,
 } from 'lucide-react';
 
 const ClientRequestDetailsPage = () => {
   const { id } = useParams();
   const messagesEndRef = useRef(null);
   const [lead, setLead] = useState(null);
-  const [items, setItems] = useState([]);
   const [messages, setMessages] = useState([]);
   const [senderNames, setSenderNames] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
   const toast = useToast();
   const [sending, setSending] = useState(false);
 
@@ -94,11 +98,7 @@ const ClientRequestDetailsPage = () => {
 
       setLead(leadData);
 
-      const [itemsRes, messagesRes] = await Promise.all([
-        supabase
-          .from('lead_request_items')
-          .select('*, products(id, name, image_url, product_code)')
-          .eq('lead_request_id', id),
+      const [messagesRes] = await Promise.all([
         supabase
           .from('lead_messages')
           .select('*')
@@ -115,7 +115,6 @@ const ClientRequestDetailsPage = () => {
         (senders || []).forEach((s) => { map[s.id] = s.full_name || ''; });
       }
       setSenderNames(map);
-      setItems(itemsRes.data || []);
       setMessages(messagesList);
     } catch (err) {
       console.error(err);
@@ -124,23 +123,58 @@ const ClientRequestDetailsPage = () => {
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast('Le fichier ne doit pas dépasser 10 Mo.', 'error');
+      return;
+    }
+    setSelectedFile(file);
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     const text = newMessage.trim();
-    if (!text || !currentUser?.id || !lead?.id || sending) return;
+    if (!text && !selectedFile) return;
+    if (!currentUser?.id || !lead?.id || sending) return;
     setSending(true);
     try {
+      let fileUrl = null;
+      let fileName = null;
+      let fileType = null;
+
+      // Upload du fichier si présent
+      if (selectedFile) {
+        const ext = selectedFile.name.split('.').pop();
+        const path = `${lead.id}/${Date.now()}_${selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const { error: uploadError } = await supabase.storage
+          .from('lead-files')
+          .upload(path, selectedFile);
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('lead-files').getPublicUrl(path);
+        fileUrl = urlData?.publicUrl || null;
+        fileName = selectedFile.name;
+        fileType = selectedFile.type;
+      }
+
       const { data: inserted, error } = await supabase
         .from('lead_messages')
         .insert({
           lead_request_id: lead.id,
           sender_id: currentUser.id,
-          content: text,
+          content: text || '',
+          file_url: fileUrl,
+          file_name: fileName,
+          file_type: fileType,
         })
         .select()
         .single();
       if (error) throw error;
       setNewMessage('');
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       if (inserted) setMessages((prev) => [...prev, inserted]);
 
       // Notifier le commercial assigné si les notifications sont activées
@@ -227,53 +261,9 @@ const ClientRequestDetailsPage = () => {
           Demande du {lead.created_at ? new Date(lead.created_at).toLocaleDateString('fr-FR') : '—'}
         </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Colonne gauche : Produits (lecture seule) */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sticky top-4">
-              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Package size={18} /> Produits demandés
-              </h2>
-              {items.length === 0 ? (
-                <p className="text-slate-500 text-sm">Aucun produit.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {items.map((row) => {
-                    const product = row.products;
-                    if (!product) return null;
-                    return (
-                      <li key={row.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                        <div className="w-12 h-12 rounded-lg bg-white border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {product.image_url ? (
-                            <img src={product.image_url} alt="" className="w-full h-full object-contain" />
-                          ) : (
-                            <Package size={20} className="text-slate-300" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-slate-800 text-sm truncate">{product.name}</p>
-                          {product.product_code && (
-                            <p className="text-xs text-slate-500">Réf. {product.product_code}</p>
-                          )}
-                        </div>
-                        <Link
-                          to={`/product/${product.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-xs font-bold flex-shrink-0"
-                        >
-                          Fiche
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </div>
-
-          {/* Colonne droite : Chat */}
-          <div className="lg:col-span-2 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
+        <div>
+          {/* Chat pleine largeur */}
+          <div className="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
               <MessageCircle size={20} className="text-slate-500" />
               <span className="font-bold text-slate-800">Conversation avec le commercial</span>
@@ -307,7 +297,30 @@ const ClientRequestDetailsPage = () => {
                           : 'bg-slate-100 text-slate-800 rounded-bl-md'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      {msg.content && <p className="text-sm whitespace-pre-wrap">{msg.content}</p>}
+                      {msg.file_url && (
+                        <div className={`${msg.content ? 'mt-2' : ''}`}>
+                          {msg.file_type?.startsWith('image/') ? (
+                            <img
+                              src={msg.file_url}
+                              alt={msg.file_name || 'Image'}
+                              className="max-w-[240px] max-h-[240px] rounded-lg object-cover cursor-pointer"
+                              onClick={() => window.open(msg.file_url, '_blank')}
+                            />
+                          ) : (
+                            <a
+                              href={msg.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center gap-2 text-xs font-medium underline ${isMyMessage(msg) ? 'text-blue-100' : 'text-blue-600'}`}
+                            >
+                              <FileText size={14} />
+                              {msg.file_name || 'Fichier joint'}
+                              <Download size={12} />
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
@@ -316,7 +329,38 @@ const ClientRequestDetailsPage = () => {
             </div>
 
             <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-100 bg-slate-50">
+              {/* File preview */}
+              {selectedFile && (
+                <div className="mb-2 flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                  <FileText size={16} className="text-blue-500 flex-shrink-0" />
+                  <span className="text-sm text-blue-800 truncate flex-1">{selectedFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                    className="text-slate-400 hover:text-red-500 transition flex-shrink-0"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
               <div className="flex gap-2">
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                  onChange={handleFileChange}
+                />
+                {/* Paperclip button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-3 rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-blue-600 hover:border-blue-300 transition self-end"
+                  title="Joindre un fichier"
+                >
+                  <Paperclip size={18} />
+                </button>
                 <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
@@ -332,7 +376,7 @@ const ClientRequestDetailsPage = () => {
                 />
                 <button
                   type="submit"
-                  disabled={!newMessage.trim() || sending}
+                  disabled={(!newMessage.trim() && !selectedFile) || sending}
                   className="px-5 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
                 >
                   {sending ? <Loader className="animate-spin" size={18} /> : <Send size={18} />}
@@ -344,6 +388,7 @@ const ClientRequestDetailsPage = () => {
         </div>
       </div>
     </div>
+
   );
 };
 

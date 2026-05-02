@@ -31,6 +31,7 @@ import AdminDeletedUsersPage from './pages/AdminDeletedUsersPage';
 import AdminLeadsPage from './pages/AdminLeadsPage';
 import AdminLeadDetailsPage from './pages/admin/AdminLeadDetailsPage';
 import AdminLeadsArchivePage from './pages/admin/AdminLeadsArchivePage';
+import AdminUserProfilePage from './pages/admin/AdminUserProfilePage';
 import MentionsLegalesPage from './pages/MentionsLegalesPage';
 import ConfidentialitePage from './pages/ConfidentialitePage';
 import SelectionPage from './pages/SelectionPage';
@@ -79,6 +80,7 @@ function App() {
             {/* Routes Admin (connexion + rôle admin ou developpeur) */}
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboardPage /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />
+            <Route path="/admin/users/:id" element={<ProtectedRoute requireAdmin><AdminUserProfilePage /></ProtectedRoute>} />
             <Route path="/admin/categories" element={<ProtectedRoute requireAdmin><AdminCategoriesPage /></ProtectedRoute>} />
             <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={['admin', 'developpeur', 'commercial']}><AdminMessagesPage /></ProtectedRoute>} />
             <Route path="/admin/deleted-users" element={<ProtectedRoute requireAdmin><AdminDeletedUsersPage /></ProtectedRoute>} />
