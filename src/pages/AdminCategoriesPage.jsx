@@ -39,7 +39,7 @@ const AdminCategoriesPage = () => {
     fetchData();
     const fallback = setTimeout(() => setLoading(false), 10000);
     return () => clearTimeout(fallback);
-  }, [view, selection]);
+  }, [view, selection.category?.id, selection.subcategory?.id]);
 
   useEffect(() => {
     supabase.from('site_settings').select('texts').eq('id', 'main').single().then(({ data }) => {
