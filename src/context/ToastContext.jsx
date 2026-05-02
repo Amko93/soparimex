@@ -18,16 +18,20 @@ const STYLES = {
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
   const counterRef = useRef(0);
+  const timersRef = useRef(new Map());
+
+  const dismiss = useCallback((id) => {
+    clearTimeout(timersRef.current.get(id));
+    timersRef.current.delete(id);
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
 
   const toast = useCallback((message, type = 'info', duration = 4000) => {
     const id = ++counterRef.current;
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, duration);
-  }, []);
-
-  const dismiss = (id) => setToasts(prev => prev.filter(t => t.id !== id));
+    const timer = setTimeout(() => dismiss(id), duration);
+    timersRef.current.set(id, timer);
+  }, [dismiss]);
 
   return (
     <ToastContext.Provider value={toast}>
