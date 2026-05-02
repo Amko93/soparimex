@@ -116,17 +116,17 @@ const Header = () => {
         </Link>
 
         {/* --- NAVIGATION DESKTOP (Caché sur mobile) --- */}
-        <nav className="hidden md:flex items-center gap-12 font-bold text-slate-500">
-          <Link to="/" className="hover:text-blue-600 transition-colors">Accueil</Link>
-          <Link to="/categories" className="hover:text-blue-600 transition-colors">Catégories</Link>
-          <Link to="/catalogues" className="hover:text-blue-600 transition-colors">Catalogues</Link>
-          <Link to="/contact" className="hover:text-blue-600 transition-colors">Contact</Link>
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-10 font-bold text-slate-500">
+          <Link to="/" className="hover:text-blue-600 transition-colors whitespace-nowrap">Accueil</Link>
+          <Link to="/categories" className="hover:text-blue-600 transition-colors whitespace-nowrap">Catégories</Link>
+          <Link to="/catalogues" className="hover:text-blue-600 transition-colors whitespace-nowrap">Catalogues</Link>
+          <Link to="/contact" className="hover:text-blue-600 transition-colors whitespace-nowrap">Contact</Link>
         </nav>
 
         {/* --- ACTIONS DESKTOP (Recherche + User) --- */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-3">
           {/* BARRE DE RECHERCHE */}
-          <div className="relative w-96" ref={searchRef}>
+          <div className="relative w-48 xl:w-72 2xl:w-96" ref={searchRef}>
             <div className="relative">
               <input 
                 type="text" 
@@ -229,8 +229,8 @@ const Header = () => {
         </div>
 
         {/* --- MENU MOBILE HAMBURGER (Visible uniquement sur mobile) --- */}
-        <button 
-          className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors z-50"
+        <button
+          className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors z-50"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Menu"
         >
@@ -240,7 +240,7 @@ const Header = () => {
 
       {/* --- MENU MOBILE PLEIN ÉCRAN --- */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-white overflow-y-auto">
+        <div className="lg:hidden fixed inset-0 z-50 bg-white overflow-y-auto">
           {/* Bouton Fermer en haut à droite */}
           <div className="flex justify-end p-4 border-b border-slate-100">
             <button 
