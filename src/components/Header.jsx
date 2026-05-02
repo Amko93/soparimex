@@ -57,10 +57,13 @@ const Header = () => {
         setIsSearching(true);
         setShowDropdown(true);
         
+        // Sanitize : retire les caractères qui cassent la syntaxe PostgREST dans .or()
+        const safe = searchTerm.trim().replace(/[(),\\]/g, '');
+        const term = `%${safe}%`;
         const { data, error } = await supabase
           .from('products')
           .select('id, name, image_url, product_code')
-          .or(`name.ilike.%${searchTerm}%,product_code.ilike.%${searchTerm}%`)
+          .or(`name.ilike.${term},product_code.ilike.${term}`)
           .limit(5);
 
         if (!error) {
