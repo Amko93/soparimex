@@ -50,7 +50,6 @@ const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null })
         if (!mounted) return;
 
         if (profileError || !profile) {
-          await supabase.auth.signOut();
           setSession(null);
           setUserRole(null);
           setIsValidated(false);
@@ -59,7 +58,7 @@ const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null })
         }
 
         if (!profile.is_validated) {
-          await supabase.auth.signOut();
+          // Pas de signOut : on redirige simplement, la session reste active
           setSession(null);
           setUserRole(null);
           setIsValidated(false);
