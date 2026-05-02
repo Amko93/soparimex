@@ -128,22 +128,19 @@ const AdminUserProfilePage = () => {
 
     setActionLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      await supabase.from('deleted_users_logs').insert({
-        email: profile.email || '',
-        full_name: profile.full_name || '',
-        societe: profile.societe || '',
-        reason,
-        deleted_by: session?.user?.id ?? null,
-        deleted_by_email: session?.user?.email ?? '',
-        deleted_at: new Date().toISOString(),
+      // Edge Function : supprime le profil ET le compte auth en une seule opération
+      const { error } = await supabase.functions.invoke('delete-user', {
+        body: {
+          userId: id,
+          email: profile.email || '',
+          fullName: profile.full_name || '',
+          societe: profile.societe || '',
+          reason,
+        },
       });
-
-      const { error } = await supabase.from('profiles').delete().eq('id', id);
       if (error) throw error;
 
-      toast('Utilisateur supprimé.', 'success');
+      toast('Utilisateur supprimé définitivement.', 'success');
       navigate('/admin/users');
     } catch (err) {
       toast('Erreur : ' + err.message, 'error');

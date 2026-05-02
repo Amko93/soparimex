@@ -111,27 +111,22 @@ const AdminUsersPage = () => {
     if (!user?.id) return;
     setActionLoading(user.id);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const deletedBy = session?.user?.id ?? null;
-      const deletedByEmail = session?.user?.email ?? '';
-
-      const { error: logError } = await supabase.from('deleted_users_logs').insert({
-        deleted_at: new Date().toISOString(),
-        email: user.email || '',
-        full_name: user.full_name || '',
-        societe: user.societe || '',
-        reason,
-        deleted_by: deletedBy,
-        deleted_by_email: deletedByEmail,
+      // Appel à l'Edge Function qui supprime le profil ET le compte auth
+      const { error } = await supabase.functions.invoke('delete-user', {
+        body: {
+          userId: user.id,
+          email: user.email || '',
+          fullName: user.full_name || '',
+          societe: user.societe || '',
+          reason,
+        },
       });
-      if (logError) throw logError;
-
-      const { error: delError } = await supabase.from('profiles').delete().eq('id', user.id);
-      if (delError) throw delError;
+      if (error) throw error;
 
       await fetchUsers();
       setDeleteModal(null);
       if (editModal?.user?.id === user.id) setEditModal(null);
+      toast('Utilisateur supprimé définitivement.', 'success');
     } catch (err) {
       console.error(err);
       toast('Erreur : ' + err.message, 'error');
