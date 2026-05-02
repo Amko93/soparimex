@@ -109,27 +109,35 @@ const AdminDashboardPage = () => {
   const saveSettings = async () => {
     setSettingsSaving(true);
     setSettingsSaved(false);
-    const { data: current } = await supabase.from('site_settings').select('texts').eq('id', 'main').single();
-    const updatedTexts = {
-      ...(current?.texts || {}),
-      notificationEmail: notifEmail.trim(),
-      defaultProductDesc: defaultProductDesc.trim(),
-    };
-    const { error: saveError } = await supabase
-      .from('site_settings')
-      .update({ texts: updatedTexts })
-      .eq('id', 'main');
+    try {
+      const { data: current, error: fetchError } = await supabase
+        .from('site_settings')
+        .select('texts')
+        .eq('id', 'main')
+        .single();
+      if (fetchError) throw fetchError;
 
-    if (saveError) {
-      console.error('Erreur sauvegarde paramètres:', saveError);
+      const updatedTexts = {
+        ...(current?.texts || {}),
+        notificationEmail: notifEmail.trim(),
+        defaultProductDesc: defaultProductDesc.trim(),
+      };
+
+      const { error: saveError } = await supabase
+        .from('site_settings')
+        .update({ texts: updatedTexts })
+        .eq('id', 'main');
+      if (saveError) throw saveError;
+
+      setSettingsSaved(true);
+      toast('Paramètres enregistrés avec succès.', 'success');
+      setTimeout(() => setSettingsSaved(false), 3000);
+    } catch (err) {
+      console.error('Erreur sauvegarde paramètres:', err);
+      toast('Erreur lors de la sauvegarde : ' + (err.message || 'erreur inconnue'), 'error');
+    } finally {
       setSettingsSaving(false);
-      return;
     }
-
-    setSettingsSaving(false);
-    setSettingsSaved(true);
-    toast('Paramètres enregistrés avec succès.', 'success');
-    setTimeout(() => setSettingsSaved(false), 3000);
   };
 
   const formatDate = (dateString) => {
