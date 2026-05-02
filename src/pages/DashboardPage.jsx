@@ -102,8 +102,8 @@ const DashboardPage = () => {
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      setPasswordMessage({ type: 'error', text: 'Le mot de passe doit contenir au moins 6 caractères.' });
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordMessage({ type: 'error', text: 'Le mot de passe doit contenir au moins 8 caractères.' });
       return;
     }
 
@@ -291,7 +291,7 @@ const DashboardPage = () => {
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                     className="w-full bg-slate-50 border p-3 pr-10 rounded-lg font-bold"
-                    placeholder="Minimum 6 caractères"
+                    placeholder="Minimum 8 caractères"
                     disabled={passwordLoading}
                     autoComplete="new-password"
                   />
