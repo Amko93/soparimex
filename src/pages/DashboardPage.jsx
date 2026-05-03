@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useTheme } from '../context/ThemeContext';
 import { User, Building2, Phone, Loader, LayoutDashboard, ShieldCheck, Edit3, Save, X, Lock, Eye, EyeOff } from 'lucide-react';
@@ -32,6 +32,15 @@ const DashboardPage = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const msgTimerRef = useRef(null);
+  const pwMsgTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(msgTimerRef.current);
+      clearTimeout(pwMsgTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     fetchProfile();
@@ -90,7 +99,8 @@ const DashboardPage = () => {
       setProfile({ ...profile, ...editForm });
       setIsEditing(false);
       setMessage({ type: 'success', text: 'Profil mis à jour !' });
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      clearTimeout(msgTimerRef.current);
+      msgTimerRef.current = setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch {
       setMessage({ type: 'error', text: 'Erreur de mise à jour.' });
     } finally {
@@ -135,7 +145,8 @@ const DashboardPage = () => {
 
       setPasswordMessage({ type: 'success', text: 'Mot de passe mis à jour avec succès !' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setTimeout(() => {
+      clearTimeout(pwMsgTimerRef.current);
+      pwMsgTimerRef.current = setTimeout(() => {
         setPasswordMessage({ type: '', text: '' });
         setShowSecurity(false);
       }, 3000);

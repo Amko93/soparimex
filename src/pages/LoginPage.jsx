@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogIn, Loader, X, Mail, Eye, EyeOff } from 'lucide-react';
@@ -15,13 +15,23 @@ const LoginPage = () => {
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState({ type: '', text: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const msgTimerRef = useRef(null);
+  const forgotPwTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(msgTimerRef.current);
+      clearTimeout(forgotPwTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     // Afficher le message de succès si présent dans location.state
     if (location.state?.message) {
       setMessage({ type: 'success', text: location.state.message });
-      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+      msgTimerRef.current = setTimeout(() => setMessage({ type: '', text: '' }), 5000);
     }
+    return () => clearTimeout(msgTimerRef.current);
   }, [location.state]);
 
   const handleForgotPassword = async (e) => {
@@ -41,11 +51,11 @@ const LoginPage = () => {
 
       if (error) throw error;
 
-      setForgotPasswordMessage({ 
-        type: 'success', 
-        text: 'Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception.' 
+      setForgotPasswordMessage({
+        type: 'success',
+        text: 'Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception.'
       });
-      setTimeout(() => {
+      forgotPwTimerRef.current = setTimeout(() => {
         setShowForgotPassword(false);
         setForgotPasswordEmail('');
         setForgotPasswordMessage({ type: '', text: '' });

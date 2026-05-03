@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../context/ToastContext';
@@ -36,6 +36,11 @@ const AdminDashboardPage = () => {
   const [defaultProductDesc, setDefaultProductDesc] = useState('');
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  const savedTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => clearTimeout(savedTimerRef.current);
+  }, []);
 
   useEffect(() => {
     loadAdminProfile();
@@ -131,7 +136,8 @@ const AdminDashboardPage = () => {
 
       setSettingsSaved(true);
       toast('Paramètres enregistrés avec succès.', 'success');
-      setTimeout(() => setSettingsSaved(false), 3000);
+      clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSettingsSaved(false), 3000);
     } catch (err) {
       console.error('Erreur sauvegarde paramètres:', err);
       toast('Erreur lors de la sauvegarde : ' + (err.message || 'erreur inconnue'), 'error');
