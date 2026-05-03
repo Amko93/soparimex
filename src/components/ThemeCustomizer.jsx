@@ -25,14 +25,21 @@ const ThemeCustomizer = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const { error } = await supabase
-      .from('site_settings')
-      .update({ colors, texts })
-      .eq('id', 'current');
-    
-    if (!error) toast("Réglages enregistrés avec succès !", 'success');
-    else toast("Erreur lors de la sauvegarde.", 'error');
-    setIsSaving(false);
+    try {
+      const { error, count } = await supabase
+        .from('site_settings')
+        .update({ colors, texts, updated_at: new Date().toISOString() }, { count: 'exact' })
+        .eq('id', 'main');
+
+      if (error) throw error;
+      if (count === 0) throw new Error('Aucune ligne mise à jour — vérifiez que id="main" existe.');
+      toast('Réglages enregistrés avec succès !', 'success');
+    } catch (err) {
+      console.error('ThemeCustomizer save error:', err);
+      toast('Erreur lors de la sauvegarde : ' + (err.message || 'erreur inconnue'), 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (userRole !== 'admin' && userRole !== 'developpeur') return null;
