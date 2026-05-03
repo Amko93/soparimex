@@ -173,7 +173,7 @@ const Header = () => {
                         >
                           <div className="w-10 h-10 bg-white rounded-lg border border-slate-100 flex items-center justify-center p-1">
                             {prod.image_url ? (
-                              <img src={prod.image_url} alt="" className="w-full h-full object-contain mix-blend-multiply"/>
+                              <img src={prod.image_url} alt="" aria-hidden="true" className="w-full h-full object-contain mix-blend-multiply"/>
                             ) : (
                               <Package size={16} className="text-slate-300"/>
                             )}
@@ -282,7 +282,7 @@ const Header = () => {
                           >
                             <div className="w-10 h-10 bg-white rounded-lg border border-slate-100 flex items-center justify-center p-1">
                               {prod.image_url ? (
-                                <img src={prod.image_url} alt="" className="w-full h-full object-contain mix-blend-multiply"/>
+                                <img src={prod.image_url} alt="" aria-hidden="true" className="w-full h-full object-contain mix-blend-multiply"/>
                               ) : (
                                 <Package size={16} className="text-slate-300"/>
                               )}

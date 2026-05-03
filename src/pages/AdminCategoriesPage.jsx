@@ -307,7 +307,7 @@ const AdminCategoriesPage = () => {
               <div key={item.id} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition">
                 <div className="flex items-center gap-5">
                   <div className="w-16 h-16 rounded-2xl bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-100">
-                    {item.image_url ? <img src={item.image_url} className="w-full h-full object-cover" /> : <div className="m-auto h-full flex items-center justify-center text-slate-300"><Package size={24}/></div>}
+                    {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <div className="m-auto h-full flex items-center justify-center text-slate-300"><Package size={24}/></div>}
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800 text-lg">{item.name}</h3>
