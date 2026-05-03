@@ -133,7 +133,7 @@ const AdminLeadDetailsPage = () => {
           .eq('lead_request_id', id)
           .order('created_at', { ascending: true }),
         leadData.client_id
-          ? supabase.from('profiles').select('id, full_name, societe, email, phone, siret, address, ville, code_postal').eq('id', leadData.client_id).single()
+          ? supabase.from('profiles').select('id, full_name, societe, email, phone, siret, zip_code, city').eq('id', leadData.client_id).single()
           : Promise.resolve({ data: null }),
       ]);
 
@@ -551,19 +551,13 @@ const AdminLeadDetailsPage = () => {
                   <p className="text-slate-800 font-mono">{clientProfile.siret}</p>
                 </div>
               )}
-              {clientProfile.address && (
+              {(clientProfile.zip_code || clientProfile.city) && (
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
-                    <MapPin size={12} /> Adresse
+                    <MapPin size={12} /> Ville / Code postal
                   </label>
-                  <p className="text-slate-800">{clientProfile.address}</p>
-                </div>
-              )}
-              {(clientProfile.ville || clientProfile.code_postal) && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Ville / Code postal</label>
                   <p className="text-slate-800">
-                    {[clientProfile.ville, clientProfile.code_postal].filter(Boolean).join(' ') || '—'}
+                    {[clientProfile.zip_code, clientProfile.city].filter(Boolean).join(' — ') || '—'}
                   </p>
                 </div>
               )}
