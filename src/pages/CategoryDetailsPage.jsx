@@ -4,6 +4,16 @@ import { supabase } from '../supabaseClient';
 import { useToast } from '../context/ToastContext';
 import { Plus, X, Loader, ArrowRight, Pencil, Trash2, AlertTriangle, ArrowLeft } from 'lucide-react';
 
+const extractStoragePath = (url) => {
+  if (!url) return null;
+  try {
+    const parts = new URL(url).pathname.split('/');
+    const bucketIndex = parts.indexOf('images');
+    if (bucketIndex === -1) return null;
+    return parts.slice(bucketIndex + 1).join('/');
+  } catch { return null; }
+};
+
 const CategoryDetailsPage = () => {
   const { id } = useParams(); // ID de la catégorie parente
   const [category, setCategory] = useState(null);
@@ -60,7 +70,12 @@ const CategoryDetailsPage = () => {
 
   const confirmDelete = async () => {
     if (!itemToDelete) return;
-    await supabase.from('subcategories').delete().eq('id', itemToDelete);
+    // Supprimer l'image du Storage avant la suppression en BDD
+    const storagePath = extractStoragePath(itemToDelete.image_url);
+    if (storagePath) {
+      await supabase.storage.from('images').remove([storagePath]);
+    }
+    await supabase.from('subcategories').delete().eq('id', itemToDelete.id);
     setShowDeleteConfirm(false);
     setItemToDelete(null);
     fetchData();
@@ -81,6 +96,11 @@ const CategoryDetailsPage = () => {
       if (newImage.size > 5 * 1024 * 1024) {
         toast("L'image ne doit pas dépasser 5 Mo.", 'error');
         setUploading(false); return;
+      }
+      // Supprimer l'ancienne image du Storage si on en remplace une
+      if (editingSub?.image_url) {
+        const oldPath = extractStoragePath(editingSub.image_url);
+        if (oldPath) await supabase.storage.from('images').remove([oldPath]);
       }
       const fileName = `${Date.now()}_${newImage.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
       await supabase.storage.from('images').upload(fileName, newImage);
@@ -142,7 +162,7 @@ const CategoryDetailsPage = () => {
             {isAdmin && (
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                 <button onClick={() => { setEditingSub(sub); setNewName(sub.name); setShowModal(true); }} className="bg-white p-2 rounded-xl text-slate-600 hover:text-blue-600 shadow-md"><Pencil size={16}/></button>
-                <button onClick={() => { setItemToDelete(sub.id); setShowDeleteConfirm(true); }} className="bg-white p-2 rounded-xl text-red-500 hover:bg-red-50 shadow-md"><Trash2 size={16}/></button>
+                <button onClick={() => { setItemToDelete(sub); setShowDeleteConfirm(true); }} className="bg-white p-2 rounded-xl text-red-500 hover:bg-red-50 shadow-md"><Trash2 size={16}/></button>
               </div>
             )}
           </div>

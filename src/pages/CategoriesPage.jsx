@@ -4,6 +4,16 @@ import { useToast } from '../context/ToastContext';
 import { Plus, X, Loader, ArrowRight, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+const extractStoragePath = (url) => {
+  if (!url) return null;
+  try {
+    const parts = new URL(url).pathname.split('/');
+    const bucketIndex = parts.indexOf('images');
+    if (bucketIndex === -1) return null;
+    return parts.slice(bucketIndex + 1).join('/');
+  } catch { return null; }
+};
+
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -49,7 +59,12 @@ const CategoriesPage = () => {
 
   const confirmDelete = async () => {
     if (!itemToDelete) return;
-    const { error } = await supabase.from('categories').delete().eq('id', itemToDelete);
+    // Supprimer l'image du Storage avant la suppression en BDD
+    const storagePath = extractStoragePath(itemToDelete.image_url);
+    if (storagePath) {
+      await supabase.storage.from('images').remove([storagePath]);
+    }
+    const { error } = await supabase.from('categories').delete().eq('id', itemToDelete.id);
     if (!error) fetchCategories();
     setShowDeleteConfirm(false);
     setItemToDelete(null);
@@ -71,6 +86,11 @@ const CategoriesPage = () => {
         setUploading(false); return;
       }
       try {
+        // Supprimer l'ancienne image du Storage si on en remplace une
+        if (editingCategory?.image_url) {
+          const oldPath = extractStoragePath(editingCategory.image_url);
+          if (oldPath) await supabase.storage.from('images').remove([oldPath]);
+        }
         const fileExt = newImage.name.split('.').pop();
         const sanitizedName = newImage.name.replace(/[^a-zA-Z0-9]/g, '_');
         const fileName = `${Date.now()}_${sanitizedName}.${fileExt}`;
@@ -150,7 +170,7 @@ const CategoriesPage = () => {
                   <Pencil size={18} />
                 </button>
                 <button 
-                  onClick={(e) => { e.preventDefault(); setItemToDelete(cat.id); setShowDeleteConfirm(true); }} 
+                  onClick={(e) => { e.preventDefault(); setItemToDelete(cat); setShowDeleteConfirm(true); }} 
                   className="bg-white p-3 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 shadow-lg border border-slate-100 transition hover:scale-110"
                 >
                   <Trash2 size={18} />
