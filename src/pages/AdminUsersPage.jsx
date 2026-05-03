@@ -81,7 +81,7 @@ const AdminUsersPage = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ role: 'client', is_validated: true })
+        .update({ role: 'client', is_validated: true, status: 'approuve' })
         .eq('id', user.id);
       if (error) throw error;
       await fetchUsers();
@@ -159,6 +159,8 @@ const AdminUsersPage = () => {
           phone: editModal.form.phone || null,
           role: editModal.form.role || 'client',
           is_validated: editModal.form.is_validated,
+          // Synchroniser status avec is_validated (source de vérité unique)
+          status: editModal.form.is_validated ? 'approuve' : 'en_attente',
         })
         .eq('id', editModal.user.id);
       if (error) throw error;
