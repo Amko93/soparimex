@@ -114,10 +114,12 @@ const AdminCategoriesPage = () => {
     }
 
     const { error } = await supabase.from(table).delete().eq('id', activeItem.id);
-    if (!error) {
-      setShowDelete(false);
-      fetchData();
+    if (error) {
+      toast('Erreur lors de la suppression : ' + (error.message || 'erreur inconnue'), 'error');
+      return;
     }
+    setShowDelete(false);
+    fetchData();
   };
 
   const openMove = async (item) => {
