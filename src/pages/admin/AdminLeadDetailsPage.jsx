@@ -24,6 +24,7 @@ import {
 const AdminLeadDetailsPage = () => {
   const { id } = useParams();
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   const [lead, setLead] = useState(null);
   const [messages, setMessages] = useState([]);
   const [clientProfile, setClientProfile] = useState(null);
@@ -40,12 +41,14 @@ const AdminLeadDetailsPage = () => {
   const [showClientModal, setShowClientModal] = useState(false);
   const [notifyEnabled, setNotifyEnabled] = useState(true);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 80;
+    if (isNearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -383,7 +386,7 @@ const AdminLeadDetailsPage = () => {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[60vh]">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[60vh]">
               {messages.length === 0 ? (
                 <p className="text-center text-slate-400 text-sm py-8">Aucun message. Envoyez le premier.</p>
               ) : (

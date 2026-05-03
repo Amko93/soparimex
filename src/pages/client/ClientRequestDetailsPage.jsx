@@ -17,6 +17,7 @@ import {
 const ClientRequestDetailsPage = () => {
   const { id } = useParams();
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   const [lead, setLead] = useState(null);
   const [messages, setMessages] = useState([]);
   const [senderNames, setSenderNames] = useState({});
@@ -30,7 +31,13 @@ const ClientRequestDetailsPage = () => {
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 80;
+    if (isNearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -269,7 +276,7 @@ const ClientRequestDetailsPage = () => {
               <span className="font-bold text-slate-800">Conversation avec le commercial</span>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[60vh]">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[60vh]">
               {messages.length === 0 ? (
                 <p className="text-center text-slate-400 text-sm py-8">Aucun message. Envoyez le premier.</p>
               ) : (
