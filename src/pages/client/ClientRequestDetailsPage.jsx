@@ -33,6 +33,7 @@ const ClientRequestDetailsPage = () => {
   const [sending, setSending] = useState(false);
   const [assignedCommercial, setAssignedCommercial] = useState(null);
   const isInitialLoad = useRef(true);
+  const channelRef = useRef(null);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -62,8 +63,8 @@ const ClientRequestDetailsPage = () => {
   }, [id, currentUser?.id]);
 
   useEffect(() => {
-    if (!lead?.id) return;
-    
+    if (!lead?.id || !currentUser?.id) return;
+
     const channelName = `lead_messages_client:${lead.id}`;
     const channel = supabase
       .channel(channelName)
@@ -77,13 +78,21 @@ const ClientRequestDetailsPage = () => {
           });
         }
       );
-    
-    channel.subscribe();
-    
+
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        // Annoncer sa présence sur cette page
+        await channel.track({ user_id: currentUser.id });
+      }
+    });
+
+    channelRef.current = channel;
+
     return () => {
       supabase.removeChannel(channel);
+      channelRef.current = null;
     };
-  }, [lead?.id]);
+  }, [lead?.id, currentUser?.id]);
 
   const loadCurrentUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -210,21 +219,34 @@ const ClientRequestDetailsPage = () => {
       // Notifier le commercial assigné si les notifications sont activées
       if (lead.assigned_to && lead.notify_on_message !== false) {
         try {
-          const { data: assignedProfile } = await supabase
-            .from('profiles')
-            .select('email, full_name')
-            .eq('id', lead.assigned_to)
-            .single();
-          if (assignedProfile?.email) {
-            await supabase.functions.invoke('send-email', {
-              body: {
-                type: 'lead-message',
-                to: assignedProfile.email,
-                senderName: currentUser.full_name || 'Un client',
-                messagePreview: text.substring(0, 200),
-                leadTitle: lead.title || 'Demande client',
-              }
-            });
+          // 1. Vérifier si le commercial est déjà sur la page (présence)
+          const presenceState = channelRef.current?.presenceState() || {};
+          const onlineUserIds = Object.values(presenceState).flat().map((p) => p.user_id);
+          const recipientOnline = onlineUserIds.includes(lead.assigned_to);
+
+          // 2. Vérifier le debounce (une seule notif toutes les 5 min)
+          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+          const alreadyNotifiedRecently = lead.last_notified_at && lead.last_notified_at > fiveMinutesAgo;
+
+          if (!recipientOnline && !alreadyNotifiedRecently) {
+            const { data: assignedProfile } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', lead.assigned_to)
+              .single();
+            if (assignedProfile?.email) {
+              await supabase.functions.invoke('send-email', {
+                body: {
+                  type: 'lead-message',
+                  to: assignedProfile.email,
+                  senderName: currentUser.full_name || 'Un client',
+                  leadTitle: lead.title || 'Demande client',
+                }
+              });
+              // Mettre à jour last_notified_at pour le debounce
+              await supabase.from('lead_requests').update({ last_notified_at: new Date().toISOString() }).eq('id', lead.id);
+              setLead((prev) => prev ? { ...prev, last_notified_at: new Date().toISOString() } : prev);
+            }
           }
         } catch (emailError) {
           console.error('Erreur notif commercial:', emailError);

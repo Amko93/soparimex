@@ -40,6 +40,7 @@ const AdminLeadDetailsPage = () => {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showClientModal, setShowClientModal] = useState(false);
   const [notifyEnabled, setNotifyEnabled] = useState(true);
+  const channelRef = useRef(null);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -68,7 +69,7 @@ const AdminLeadDetailsPage = () => {
 
   useEffect(() => {
     if (!lead?.id || !currentUser) return;
-    
+
     const channelName = `lead_messages:${lead.id}`;
     const channel = supabase
       .channel(channelName)
@@ -82,11 +83,18 @@ const AdminLeadDetailsPage = () => {
           });
         }
       );
-    
-    channel.subscribe();
-    
+
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({ user_id: currentUser.id });
+      }
+    });
+
+    channelRef.current = channel;
+
     return () => {
       supabase.removeChannel(channel);
+      channelRef.current = null;
     };
   }, [lead?.id, currentUser]);
 
@@ -212,19 +220,31 @@ const AdminLeadDetailsPage = () => {
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (inserted) setMessages((prev) => [...prev, inserted]);
 
-      // Envoi de l'email au client si l'expéditeur est un membre du staff
+      // Notifier le client si l'expéditeur est un membre du staff
       const isStaff = currentUser.role === 'admin' || currentUser.role === 'commercial' || currentUser.role === 'developpeur';
-      if (isStaff && clientProfile?.email) {
+      if (isStaff && clientProfile?.email && lead.notify_on_message !== false) {
         try {
-          await supabase.functions.invoke('send-email', {
-            body: {
-              type: 'lead-message',
-              to: clientProfile.email,
-              senderName: currentUser.full_name || 'L\'équipe Soparimex',
-              messagePreview: text.substring(0, 200),
-              leadTitle: lead.title || 'Votre demande',
-            }
-          });
+          // 1. Vérifier si le client est déjà sur la page (présence)
+          const presenceState = channelRef.current?.presenceState() || {};
+          const onlineUserIds = Object.values(presenceState).flat().map((p) => p.user_id);
+          const clientOnline = onlineUserIds.includes(lead.client_id);
+
+          // 2. Vérifier le debounce (une seule notif toutes les 5 min)
+          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+          const alreadyNotifiedRecently = lead.last_notified_at && lead.last_notified_at > fiveMinutesAgo;
+
+          if (!clientOnline && !alreadyNotifiedRecently) {
+            await supabase.functions.invoke('send-email', {
+              body: {
+                type: 'lead-message',
+                to: clientProfile.email,
+                senderName: currentUser.full_name || 'L\'équipe Soparimex',
+                leadTitle: lead.title || 'Votre demande',
+              }
+            });
+            await supabase.from('lead_requests').update({ last_notified_at: new Date().toISOString() }).eq('id', lead.id);
+            setLead((prev) => prev ? { ...prev, last_notified_at: new Date().toISOString() } : prev);
+          }
         } catch (emailError) {
           console.error('Erreur envoi email client:', emailError);
         }
