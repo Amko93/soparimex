@@ -198,6 +198,8 @@ const AdminUserProfilePage = () => {
   const isAdmin = (role) => ['admin', 'developpeur'].includes((role || '').toLowerCase());
   const isSelf = profile?.id === currentUser?.id;
   const canAct = !isSelf && !isAdmin(profile?.role);
+  const profileRole = (profile?.role || '').toLowerCase().trim();
+  const isStaffProfile = profileRole === 'admin' || profileRole === 'developpeur' || profileRole === 'commercial';
 
   if (loading) {
     return (
@@ -336,7 +338,7 @@ const AdminUserProfilePage = () => {
           <div className="lg:col-span-2 space-y-6">
 
             {/* Fiche profil commercial/admin */}
-            {(['admin', 'developpeur', 'commercial'].includes((profile.role || '').toLowerCase())) && (
+            {isStaffProfile && (
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
