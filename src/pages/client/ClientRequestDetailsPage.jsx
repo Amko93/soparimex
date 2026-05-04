@@ -65,7 +65,7 @@ const ClientRequestDetailsPage = () => {
   useEffect(() => {
     if (!lead?.id || !currentUser?.id) return;
 
-    const channelName = `lead_messages_client:${lead.id}`;
+    const channelName = `lead_conversation:${lead.id}`;
     const channel = supabase
       .channel(channelName)
       .on(
@@ -224,9 +224,14 @@ const ClientRequestDetailsPage = () => {
           const onlineUserIds = Object.values(presenceState).flat().map((p) => p.user_id);
           const recipientOnline = onlineUserIds.includes(lead.assigned_to);
 
-          // 2. Vérifier le debounce (une seule notif toutes les 5 min)
+          // 2. Vérifier le debounce (une seule notif toutes les 5 min) — lecture fraîche en BDD
+          const { data: freshLead } = await supabase
+            .from('lead_requests')
+            .select('last_notified_at')
+            .eq('id', lead.id)
+            .single();
           const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-          const alreadyNotifiedRecently = lead.last_notified_at && lead.last_notified_at > fiveMinutesAgo;
+          const alreadyNotifiedRecently = freshLead?.last_notified_at && freshLead.last_notified_at > fiveMinutesAgo;
 
           if (!recipientOnline && !alreadyNotifiedRecently) {
             const { data: assignedProfile } = await supabase
