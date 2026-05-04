@@ -32,6 +32,7 @@ const ClientRequestsPage = () => {
   useEffect(() => {
     if (!userId) return;
     fetchRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const fetchRequests = async () => {

@@ -23,6 +23,7 @@ const AdminLeadsArchivePage = () => {
 
   useEffect(() => {
     if (currentUser) fetchLeads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
 
   const loadCurrentUser = async () => {

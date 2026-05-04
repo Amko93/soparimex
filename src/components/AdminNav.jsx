@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, LayoutGrid, Users, ClipboardList, History } from 'lucide-react';
+import { LayoutDashboard, LayoutGrid, Users, ClipboardList, History, UserCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const AdminNav = () => {
@@ -25,6 +25,7 @@ const AdminNav = () => {
     { to: '/admin/users', label: 'Utilisateurs', icon: Users, hideForCommercial: true },
     { to: '/admin/leads', label: 'Demandes', icon: ClipboardList, hideForCommercial: false },
     { to: '/admin/leads/archive', label: 'Historique', icon: History, hideForCommercial: false },
+    { to: '/mon-profil', label: 'Mon profil', icon: UserCircle, hideForCommercial: false },
   ];
 
   const isActive = (path) => {

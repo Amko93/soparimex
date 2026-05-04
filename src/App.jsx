@@ -32,6 +32,7 @@ import AdminLeadsPage from './pages/AdminLeadsPage';
 import AdminLeadDetailsPage from './pages/admin/AdminLeadDetailsPage';
 import AdminLeadsArchivePage from './pages/admin/AdminLeadsArchivePage';
 import AdminUserProfilePage from './pages/admin/AdminUserProfilePage';
+import CommercialProfilePage from './pages/CommercialProfilePage';
 import MentionsLegalesPage from './pages/MentionsLegalesPage';
 import ConfidentialitePage from './pages/ConfidentialitePage';
 import SelectionPage from './pages/SelectionPage';
@@ -87,6 +88,7 @@ function App() {
                 <Route path="/admin/leads" element={<ProtectedRoute allowedRoles={['admin', 'developpeur', 'commercial']}><AdminLeadsPage /></ProtectedRoute>} />
                 <Route path="/admin/leads/archive" element={<ProtectedRoute allowedRoles={['admin', 'developpeur', 'commercial']}><AdminLeadsArchivePage /></ProtectedRoute>} />
                 <Route path="/admin/leads/:id" element={<ProtectedRoute allowedRoles={['admin', 'developpeur', 'commercial', 'client']}><AdminLeadDetailsPage /></ProtectedRoute>} />
+                <Route path="/mon-profil" element={<ProtectedRoute allowedRoles={['admin', 'developpeur', 'commercial']}><CommercialProfilePage /></ProtectedRoute>} />
 
                 {/* 404 */}
                 <Route path="*" element={<NotFoundPage />} />

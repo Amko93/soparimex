@@ -59,15 +59,25 @@ const AdminUsersPage = () => {
     }
   };
 
+  const roleOrder = (role) => {
+    const r = (role || '').toLowerCase();
+    if (r === 'admin' || r === 'developpeur') return 0;
+    if (r === 'commercial') return 1;
+    return 2;
+  };
+
   const filteredUsers = useMemo(() => {
-    if (!searchTerm.trim()) return users;
-    const q = searchTerm.toLowerCase().trim();
-    return users.filter(
-      (u) =>
-        (u.full_name || '').toLowerCase().includes(q) ||
-        (u.email || '').toLowerCase().includes(q) ||
-        (u.societe || '').toLowerCase().includes(q)
-    );
+    const list = searchTerm.trim()
+      ? users.filter((u) => {
+          const q = searchTerm.toLowerCase().trim();
+          return (
+            (u.full_name || '').toLowerCase().includes(q) ||
+            (u.email || '').toLowerCase().includes(q) ||
+            (u.societe || '').toLowerCase().includes(q)
+          );
+        })
+      : [...users];
+    return list.sort((a, b) => roleOrder(a.role) - roleOrder(b.role));
   }, [users, searchTerm]);
 
   const isPending = (user) => {
@@ -300,7 +310,17 @@ const AdminUsersPage = () => {
                           onClick={() => navigate(`/admin/users/${user.id}`)}
                         >
                           <td className="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">{formatDate(user.created_at)}</td>
-                          <td className="px-4 py-4 font-semibold text-slate-800">{user.full_name || '—'}</td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-2">
+                              {(roleString.includes('admin') || roleString.includes('developpeur')) && (
+                                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0" title="Admin" />
+                              )}
+                              {roleString === 'commercial' && (
+                                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" title="Commercial" />
+                              )}
+                              <span className="font-semibold text-slate-800">{user.full_name || '—'}</span>
+                            </div>
+                          </td>
                           <td className="px-4 py-4 text-sm text-slate-600">{user.societe || '—'}</td>
                           <td className="px-4 py-4 text-sm text-slate-600">{user.email || '—'}</td>
                           <td className="px-4 py-4">

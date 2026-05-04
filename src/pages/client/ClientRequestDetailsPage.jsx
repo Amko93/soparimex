@@ -54,6 +54,7 @@ const ClientRequestDetailsPage = () => {
   useEffect(() => {
     if (!id || !currentUser?.id) return;
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, currentUser?.id]);
 
   useEffect(() => {
