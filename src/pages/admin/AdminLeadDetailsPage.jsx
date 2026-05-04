@@ -40,6 +40,9 @@ const AdminLeadDetailsPage = () => {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showClientModal, setShowClientModal] = useState(false);
   const [notifyEnabled, setNotifyEnabled] = useState(true);
+  const [recipientOnline, setRecipientOnline] = useState(false);
+  const [recipientLastSeen, setRecipientLastSeen] = useState(null);
+  const recipientOnlineRef = useRef(false);
   const channelRef = useRef(null);
 
   useEffect(() => {
@@ -71,6 +74,8 @@ const AdminLeadDetailsPage = () => {
     if (!lead?.id || !currentUser) return;
 
     const channelName = `lead_conversation:${lead.id}`;
+    const targetId = lead.client_id; // client à surveiller
+
     const channel = supabase
       .channel(channelName)
       .on(
@@ -82,7 +87,18 @@ const AdminLeadDetailsPage = () => {
             return [...prev, payload.new];
           });
         }
-      );
+      )
+      .on('presence', { event: 'sync' }, () => {
+        if (!targetId) return;
+        const state = channel.presenceState();
+        const onlineIds = Object.values(state).flat().map((p) => p.user_id);
+        const isOnline = onlineIds.includes(targetId);
+        if (recipientOnlineRef.current && !isOnline) {
+          setRecipientLastSeen(new Date());
+        }
+        recipientOnlineRef.current = isOnline;
+        setRecipientOnline(isOnline);
+      });
 
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
@@ -224,10 +240,8 @@ const AdminLeadDetailsPage = () => {
       const isStaff = currentUser.role === 'admin' || currentUser.role === 'commercial' || currentUser.role === 'developpeur';
       if (isStaff && clientProfile?.email && lead.notify_on_message !== false) {
         try {
-          // 1. Vérifier si le client est déjà sur la page (présence)
-          const presenceState = channelRef.current?.presenceState() || {};
-          const onlineUserIds = Object.values(presenceState).flat().map((p) => p.user_id);
-          const clientOnline = onlineUserIds.includes(lead.client_id);
+          // 1. Vérifier si le client est déjà sur la page (présence en temps réel)
+          const clientOnline = recipientOnlineRef.current;
 
           // 2. Vérifier le debounce (une seule notif toutes les 5 min) — lecture fraîche en BDD
           const { data: freshLead } = await supabase
@@ -297,8 +311,16 @@ const AdminLeadDetailsPage = () => {
   };
 
   const isMyMessage = (msg) => msg.sender_id === currentUser?.id;
-  
+
   const isDeletedUser = (msg) => !msg.sender_id;
+
+  const formatLastSeen = (date) => {
+    if (!date) return '';
+    const diffMin = Math.floor((Date.now() - date.getTime()) / 60000);
+    if (diffMin < 1) return 'à l\'instant';
+    if (diffMin < 60) return `il y a ${diffMin} min`;
+    return `il y a ${Math.floor(diffMin / 60)}h`;
+  };
 
   if (loading) {
     return (
@@ -397,9 +419,21 @@ const AdminLeadDetailsPage = () => {
           {/* COLONNE DROITE - 2/3 - Chat */}
           <div className="lg:col-span-2 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageCircle size={20} className="text-slate-500" />
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <MessageCircle size={20} className="text-slate-500 flex-shrink-0" />
                 <span className="font-bold text-slate-800">Conversation</span>
+                <div className={`ml-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold select-none ${
+                  recipientOnline
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-slate-100 text-slate-500'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${recipientOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                  {recipientOnline
+                    ? 'Client en ligne'
+                    : recipientLastSeen
+                      ? `Hors ligne ${formatLastSeen(recipientLastSeen)}`
+                      : 'Hors ligne'}
+                </div>
               </div>
               {lead?.assigned_to === currentUser?.id && (
                 <button

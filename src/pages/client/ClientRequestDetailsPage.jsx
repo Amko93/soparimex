@@ -32,6 +32,9 @@ const ClientRequestDetailsPage = () => {
   const toast = useToast();
   const [sending, setSending] = useState(false);
   const [assignedCommercial, setAssignedCommercial] = useState(null);
+  const [recipientOnline, setRecipientOnline] = useState(false);
+  const [recipientLastSeen, setRecipientLastSeen] = useState(null);
+  const recipientOnlineRef = useRef(false);
   const isInitialLoad = useRef(true);
   const channelRef = useRef(null);
 
@@ -66,6 +69,8 @@ const ClientRequestDetailsPage = () => {
     if (!lead?.id || !currentUser?.id) return;
 
     const channelName = `lead_conversation:${lead.id}`;
+    const targetId = lead.assigned_to; // commercial à surveiller
+
     const channel = supabase
       .channel(channelName)
       .on(
@@ -77,7 +82,18 @@ const ClientRequestDetailsPage = () => {
             return [...prev, payload.new];
           });
         }
-      );
+      )
+      .on('presence', { event: 'sync' }, () => {
+        if (!targetId) return;
+        const state = channel.presenceState();
+        const onlineIds = Object.values(state).flat().map((p) => p.user_id);
+        const isOnline = onlineIds.includes(targetId);
+        if (recipientOnlineRef.current && !isOnline) {
+          setRecipientLastSeen(new Date());
+        }
+        recipientOnlineRef.current = isOnline;
+        setRecipientOnline(isOnline);
+      });
 
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
@@ -219,10 +235,8 @@ const ClientRequestDetailsPage = () => {
       // Notifier le commercial assigné si les notifications sont activées
       if (lead.assigned_to && lead.notify_on_message !== false) {
         try {
-          // 1. Vérifier si le commercial est déjà sur la page (présence)
-          const presenceState = channelRef.current?.presenceState() || {};
-          const onlineUserIds = Object.values(presenceState).flat().map((p) => p.user_id);
-          const recipientOnline = onlineUserIds.includes(lead.assigned_to);
+          // 1. Vérifier si le commercial est déjà sur la page (présence en temps réel)
+          const recipientIsOnline = recipientOnlineRef.current;
 
           // 2. Vérifier le debounce (une seule notif toutes les 5 min) — lecture fraîche en BDD
           const { data: freshLead } = await supabase
@@ -233,7 +247,7 @@ const ClientRequestDetailsPage = () => {
           const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
           const alreadyNotifiedRecently = freshLead?.last_notified_at && freshLead.last_notified_at > fiveMinutesAgo;
 
-          if (!recipientOnline && !alreadyNotifiedRecently) {
+          if (!recipientIsOnline && !alreadyNotifiedRecently) {
             const { data: assignedProfile } = await supabase
               .from('profiles')
               .select('email, full_name')
@@ -278,8 +292,16 @@ const ClientRequestDetailsPage = () => {
   };
 
   const isMyMessage = (msg) => msg.sender_id === currentUser?.id;
-  
+
   const isDeletedUser = (msg) => !msg.sender_id;
+
+  const formatLastSeen = (date) => {
+    if (!date) return '';
+    const diffMin = Math.floor((Date.now() - date.getTime()) / 60000);
+    if (diffMin < 1) return 'à l\'instant';
+    if (diffMin < 60) return `il y a ${diffMin} min`;
+    return `il y a ${Math.floor(diffMin / 60)}h`;
+  };
 
   if (loading) {
     return (
@@ -405,6 +427,20 @@ const ClientRequestDetailsPage = () => {
             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
               <MessageCircle size={20} className="text-slate-500" />
               <span className="font-bold text-slate-800">Conversation</span>
+              {lead.assigned_to && (
+                <div className={`ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold select-none ${
+                  recipientOnline
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-slate-100 text-slate-500'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${recipientOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                  {recipientOnline
+                    ? 'Commercial en ligne'
+                    : recipientLastSeen
+                      ? `Hors ligne ${formatLastSeen(recipientLastSeen)}`
+                      : 'Hors ligne'}
+                </div>
+              )}
             </div>
 
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[60vh]">
