@@ -24,6 +24,7 @@ import {
   Save,
   Briefcase,
   MapPin,
+  Pencil,
 } from 'lucide-react';
 
 const AdminUserProfilePage = () => {
@@ -336,11 +337,21 @@ const AdminUserProfilePage = () => {
 
             {/* Fiche profil commercial/admin */}
             {(['admin', 'developpeur', 'commercial'].includes((profile.role || '').toLowerCase())) && (
-              (profile.job_title || profile.bio || profile.city) ? (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div className="flex items-center justify-between">
                   <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <Briefcase size={14} /> Fiche profil
                   </h2>
+                  {profile.id === currentUser?.id && (
+                    <Link
+                      to="/mon-profil"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition"
+                    >
+                      <Pencil size={13} /> Modifier mon profil
+                    </Link>
+                  )}
+                </div>
+                {(profile.job_title || profile.bio || profile.city || profile.avatar_url) ? (
                   <div className="flex gap-4 flex-wrap">
                     {profile.avatar_url && (
                       <img
@@ -349,7 +360,7 @@ const AdminUserProfilePage = () => {
                         className="w-16 h-16 rounded-xl object-cover border border-slate-200 flex-shrink-0"
                       />
                     )}
-                    <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex-1 min-w-0 space-y-1.5">
                       {profile.job_title && (
                         <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                           <Briefcase size={14} className="text-slate-400" /> {profile.job_title}
@@ -366,17 +377,25 @@ const AdminUserProfilePage = () => {
                         </p>
                       )}
                       {profile.bio && (
-                        <p className="text-sm text-slate-600 leading-relaxed mt-2 whitespace-pre-wrap">{profile.bio}</p>
+                        <p className="text-sm text-slate-600 leading-relaxed mt-1 whitespace-pre-wrap">{profile.bio}</p>
                       )}
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-5 text-center text-slate-400 text-sm">
-                  <Briefcase size={20} className="mx-auto mb-2 opacity-40" />
-                  Fiche profil non renseignée.
-                </div>
-              )
+                ) : (
+                  <div className="flex flex-col items-center gap-3 py-4 text-slate-400 text-sm text-center">
+                    <Briefcase size={28} className="opacity-30" />
+                    <p>Fiche profil non encore renseignée.</p>
+                    {profile.id === currentUser?.id && (
+                      <Link
+                        to="/mon-profil"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-bold rounded-xl text-sm hover:bg-blue-700 transition"
+                      >
+                        <Pencil size={14} /> Remplir ma fiche
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Stats rapides */}
