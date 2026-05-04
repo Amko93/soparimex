@@ -317,58 +317,72 @@ const ClientRequestDetailsPage = () => {
           {/* Carte profil du commercial assigné */}
           {assignedCommercial ? (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-              <div className="flex items-start gap-4">
-                {/* Avatar */}
-                <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 flex items-center justify-center border border-slate-200">
-                  {assignedCommercial.avatar_url ? (
-                    <img
-                      src={assignedCommercial.avatar_url}
-                      alt={assignedCommercial.full_name || 'Commercial'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User size={28} className="text-slate-400" />
-                  )}
-                </div>
-                {/* Infos principales */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-0.5">Votre commercial</p>
-                  <p className="font-black text-slate-900">{assignedCommercial.full_name || '—'}</p>
-                  {assignedCommercial.job_title && (
-                    <p className="text-sm text-slate-500">{assignedCommercial.job_title}</p>
-                  )}
-                  <div className="mt-2 space-y-1">
-                    {assignedCommercial.email && (
-                      <p className="text-sm text-slate-600 flex items-center gap-1.5">
-                        <Mail size={13} className="text-slate-400 flex-shrink-0" />
-                        <a href={`mailto:${assignedCommercial.email}`} className="hover:text-blue-600 transition truncate">
-                          {assignedCommercial.email}
-                        </a>
-                      </p>
-                    )}
-                    {assignedCommercial.phone && (
-                      <p className="text-sm text-slate-600 flex items-center gap-1.5">
-                        <Phone size={13} className="text-slate-400 flex-shrink-0" />
-                        <a href={`tel:${assignedCommercial.phone}`} className="hover:text-blue-600 transition">
-                          {assignedCommercial.phone}
-                        </a>
-                      </p>
-                    )}
-                    {assignedCommercial.city && (
-                      <p className="text-sm text-slate-500 flex items-center gap-1.5">
-                        <MapPin size={13} className="text-slate-400 flex-shrink-0" />
-                        {assignedCommercial.city}
-                      </p>
+              <div className="flex flex-col sm:flex-row gap-5">
+
+                {/* Colonne gauche : avatar + coordonnées */}
+                <div className="flex items-start gap-4 sm:w-64 flex-shrink-0">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 flex items-center justify-center border border-slate-200">
+                    {assignedCommercial.avatar_url ? (
+                      <img
+                        src={assignedCommercial.avatar_url}
+                        alt={assignedCommercial.full_name || 'Commercial'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User size={28} className="text-slate-400" />
                     )}
                   </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-0.5">Votre commercial</p>
+                    <p className="font-black text-slate-900">{assignedCommercial.full_name || '—'}</p>
+                    {assignedCommercial.job_title && (
+                      <p className="text-sm text-slate-500">{assignedCommercial.job_title}</p>
+                    )}
+                    <div className="mt-2 space-y-1">
+                      {assignedCommercial.email && (
+                        <p className="text-sm text-slate-600 flex items-center gap-1.5">
+                          <Mail size={13} className="text-slate-400 flex-shrink-0" />
+                          <a href={`mailto:${assignedCommercial.email}`} className="hover:text-blue-600 transition truncate">
+                            {assignedCommercial.email}
+                          </a>
+                        </p>
+                      )}
+                      {assignedCommercial.phone && (
+                        <p className="text-sm text-slate-600 flex items-center gap-1.5">
+                          <Phone size={13} className="text-slate-400 flex-shrink-0" />
+                          <a href={`tel:${assignedCommercial.phone}`} className="hover:text-blue-600 transition">
+                            {assignedCommercial.phone}
+                          </a>
+                        </p>
+                      )}
+                      {assignedCommercial.city && (
+                        <p className="text-sm text-slate-500 flex items-center gap-1.5">
+                          <MapPin size={13} className="text-slate-400 flex-shrink-0" />
+                          {assignedCommercial.city}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
+
+                {/* Séparateur vertical */}
+                {assignedCommercial.bio && assignedCommercial.bio_visible !== false && (
+                  <div className="hidden sm:block w-px bg-slate-100 flex-shrink-0" />
+                )}
+
+                {/* Colonne droite : présentation */}
+                {assignedCommercial.bio && assignedCommercial.bio_visible !== false && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
+                      Information du commercial
+                    </p>
+                    <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                      {assignedCommercial.bio}
+                    </p>
+                  </div>
+                )}
+
               </div>
-              {/* Bio — uniquement si visible par les clients */}
-              {assignedCommercial.bio && assignedCommercial.bio_visible !== false && (
-                <p className="mt-4 pt-4 border-t border-slate-100 text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                  {assignedCommercial.bio}
-                </p>
-              )}
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4 flex items-center gap-3">
