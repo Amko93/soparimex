@@ -355,6 +355,11 @@ const AdminUserProfilePage = () => {
                           <Briefcase size={14} className="text-slate-400" /> {profile.job_title}
                         </p>
                       )}
+                      {profile.email && (
+                        <p className="text-sm text-slate-500 flex items-center gap-1.5">
+                          <Mail size={14} className="text-slate-400" /> {profile.email}
+                        </p>
+                      )}
                       {profile.city && (
                         <p className="text-sm text-slate-500 flex items-center gap-1.5">
                           <MapPin size={14} className="text-slate-400" /> {profile.city}
