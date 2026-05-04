@@ -14,8 +14,6 @@ import {
   X,
   MapPin,
   Hash,
-  Bell,
-  BellOff,
   Paperclip,
   FileText,
   Download,
@@ -39,7 +37,6 @@ const AdminLeadDetailsPage = () => {
   const toast = useToast();
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showClientModal, setShowClientModal] = useState(false);
-  const [notifyEnabled, setNotifyEnabled] = useState(true);
   const [recipientOnline, setRecipientOnline] = useState(false);
   const [recipientLastSeen, setRecipientLastSeen] = useState(null);
   const recipientOnlineRef = useRef(false);
@@ -154,7 +151,6 @@ const AdminLeadDetailsPage = () => {
       }
 
       setLead(leadData);
-      setNotifyEnabled(leadData.notify_on_message !== false);
 
       const [messagesRes, clientRes] = await Promise.all([
         supabase
@@ -238,7 +234,7 @@ const AdminLeadDetailsPage = () => {
 
       // Notifier le client si l'expéditeur est un membre du staff
       const isStaff = currentUser.role === 'admin' || currentUser.role === 'commercial' || currentUser.role === 'developpeur';
-      if (isStaff && clientProfile?.email && lead.notify_on_message !== false) {
+      if (isStaff && clientProfile?.email) {
         try {
           // 1. Vérifier si le client est déjà sur la page (présence en temps réel)
           const clientOnline = recipientOnlineRef.current;
@@ -274,12 +270,6 @@ const AdminLeadDetailsPage = () => {
     } finally {
       setSending(false);
     }
-  };
-
-  const toggleNotify = async () => {
-    const newVal = !notifyEnabled;
-    setNotifyEnabled(newVal);
-    await supabase.from('lead_requests').update({ notify_on_message: newVal }).eq('id', lead.id);
   };
 
   const handleStatusChange = async (e) => {
@@ -435,20 +425,6 @@ const AdminLeadDetailsPage = () => {
                       : 'Hors ligne'}
                 </div>
               </div>
-              {lead?.assigned_to === currentUser?.id && (
-                <button
-                  onClick={toggleNotify}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                    notifyEnabled
-                      ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                      : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-                  }`}
-                  title={notifyEnabled ? 'Notifications activées' : 'Notifications désactivées'}
-                >
-                  {notifyEnabled ? <Bell size={14} /> : <BellOff size={14} />}
-                  {notifyEnabled ? 'Notifs ON' : 'Notifs OFF'}
-                </button>
-              )}
             </div>
 
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[60vh]">

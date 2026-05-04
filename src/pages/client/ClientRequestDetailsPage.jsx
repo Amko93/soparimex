@@ -233,7 +233,7 @@ const ClientRequestDetailsPage = () => {
       if (inserted) setMessages((prev) => [...prev, inserted]);
 
       // Notifier le commercial assigné si les notifications sont activées
-      if (lead.assigned_to && lead.notify_on_message !== false) {
+      if (lead.assigned_to) {
         try {
           // 1. Vérifier si le commercial est déjà sur la page (présence en temps réel)
           const recipientIsOnline = recipientOnlineRef.current;
