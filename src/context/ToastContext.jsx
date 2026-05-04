@@ -54,6 +54,7 @@ export const ToastProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook lié au contexte, fichier unique intentionnel
 export const useToast = () => {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error('useToast doit être utilisé dans un ToastProvider');

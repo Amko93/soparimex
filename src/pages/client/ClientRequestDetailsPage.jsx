@@ -153,7 +153,6 @@ const ClientRequestDetailsPage = () => {
 
       // Upload du fichier si présent
       if (selectedFile) {
-        const ext = selectedFile.name.split('.').pop();
         const path = `${lead.id}/${Date.now()}_${selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
         const { error: uploadError } = await supabase.storage
           .from('lead-files')

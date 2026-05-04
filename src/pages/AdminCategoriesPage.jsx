@@ -39,6 +39,7 @@ const AdminCategoriesPage = () => {
     fetchData();
     const fallback = setTimeout(() => setLoading(false), 10000);
     return () => clearTimeout(fallback);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, selection.category?.id, selection.subcategory?.id]);
 
   useEffect(() => {

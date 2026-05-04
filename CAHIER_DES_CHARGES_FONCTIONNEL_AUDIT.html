@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cahier des charges fonctionnel — Audit Soparimex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f1f5f9; color: #1e293b; min-height: 100vh; }
+
+    header { background: #0f172a; color: white; padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    header h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+    header span { font-size: 0.85rem; color: #94a3b8; }
+
+    .progress-bar { background: #1e293b; padding: 12px 40px; display: flex; align-items: center; gap: 16px; }
+    .progress-track { flex: 1; height: 8px; background: #334155; border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 99px; transition: width 0.4s ease; }
+    .progress-label { font-size: 0.8rem; color: #94a3b8; white-space: nowrap; }
+    .progress-counts { display: flex; gap: 16px; font-size: 0.78rem; color: #cbd5e1; }
+    .progress-counts span { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+    .container { max-width: 1080px; margin: 32px auto; padding: 0 24px 90px; }
+    .intro { background: white; border: 2px solid #e2e8f0; border-radius: 18px; padding: 22px 24px; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04); }
+    .intro h2 { font-size: 1rem; margin-bottom: 8px; color: #0f172a; }
+    .intro p { color: #475569; line-height: 1.65; font-size: 0.9rem; }
+    .intro-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+    .intro-pill { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; font-size: 0.78rem; color: #475569; font-weight: 700; }
+
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .filter-btn { padding: 6px 16px; border-radius: 99px; border: 2px solid transparent; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.15s; background: white; color: #64748b; border-color: #e2e8f0; }
+    .filter-btn.active { background: #1e40af; color: white; border-color: #1e40af; }
+    .filter-btn:hover:not(.active) { border-color: #94a3b8; }
+
+    .section { margin-bottom: 32px; }
+    .section-title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 12px; padding-left: 4px; }
+
+    .card { background: white; border-radius: 16px; border: 2px solid transparent; margin-bottom: 10px; overflow: hidden; transition: all 0.2s; }
+    .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .card.done { opacity: 0.58; }
+    .card.done .card-title { text-decoration: line-through; color: #94a3b8; }
+
+    .card-header { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; cursor: pointer; }
+    .priority-badge { flex-shrink: 0; font-size: 1.1rem; margin-top: 1px; }
+    .card-body { flex: 1; min-width: 0; }
+    .card-title { font-weight: 800; font-size: 0.95rem; line-height: 1.4; margin-bottom: 4px; color: #0f172a; }
+    .card-meta { font-size: 0.78rem; color: #64748b; line-height: 1.45; }
+    .card-meta strong { color: #475569; }
+
+    .status-group { flex-shrink: 0; display: flex; gap: 6px; align-items: center; }
+    .status-btn { padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 800; border: none; cursor: pointer; transition: all 0.15s; opacity: 0.35; }
+    .status-btn.active { opacity: 1; }
+    .status-btn.todo  { background: #fee2e2; color: #dc2626; }
+    .status-btn.wip   { background: #fef3c7; color: #d97706; }
+    .status-btn.done  { background: #dcfce7; color: #16a34a; }
+
+    .card-detail { padding: 0 18px 16px 50px; }
+    .detail-block { margin-bottom: 14px; }
+    .detail-title { font-size: 0.68rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .detail-text { font-size: 0.86rem; color: #475569; line-height: 1.65; }
+    .acceptance-list { padding-left: 18px; color: #475569; font-size: 0.84rem; line-height: 1.65; }
+    .note-label { font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .card-detail textarea { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 0.82rem; font-family: inherit; resize: vertical; outline: none; min-height: 70px; color: #475569; transition: border-color 0.15s; }
+    .card-detail textarea:focus { border-color: #3b82f6; }
+
+    .card[data-priority="critical"] { border-color: #fecaca; }
+    .card[data-priority="critical"] .card-header { background: #fff5f5; }
+    .card[data-priority="high"] { border-color: #fed7aa; }
+    .card[data-priority="high"] .card-header { background: #fffaf5; }
+    .card[data-priority="medium"] { border-color: #e2e8f0; }
+    .card[data-priority="medium"] .card-header { background: #f8fafc; }
+
+    .export-btn { position: fixed; bottom: 24px; right: 24px; background: #1e40af; color: white; border: none; padding: 12px 22px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 16px rgba(30,64,175,0.4); transition: all 0.2s; }
+    .export-btn:hover { background: #1d3a9e; transform: translateY(-1px); }
+
+    @media (max-width: 760px) {
+      header { padding: 20px; }
+      .progress-bar { padding: 12px 20px; flex-direction: column; align-items: stretch; }
+      .container { padding: 0 12px 90px; }
+      .intro-grid { grid-template-columns: 1fr; }
+      .status-group { flex-direction: column; gap: 4px; }
+      .card-header { flex-wrap: wrap; }
+      .card-detail { padding-left: 18px; }
+      .export-btn { left: 12px; right: 12px; width: calc(100% - 24px); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Cahier des charges fonctionnel — Audit Soparimex</h1>
+    <span>Sécurité Supabase · Parcours métier · Corrections prioritaires</span>
+  </div>
+  <div id="last-updated" style="font-size:0.78rem;color:#94a3b8;"></div>
+</header>
+
+<div class="progress-bar">
+  <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="progress-counts">
+    <span><span class="dot" style="background:#dc2626"></span><span id="count-todo">0</span> à faire</span>
+    <span><span class="dot" style="background:#d97706"></span><span id="count-wip">0</span> en cours</span>
+    <span><span class="dot" style="background:#16a34a"></span><span id="count-done">0</span> terminés</span>
+  </div>
+  <div class="progress-label" id="progress-label">0% terminé</div>
+</div>
+
+<main class="container">
+  <section class="intro">
+    <h2>Objectif du document</h2>
+    <p>
+      Ce cahier des charges transforme l'audit technique du projet Soparimex en liste fonctionnelle exploitable.
+      Chaque carte décrit une correction attendue, son périmètre, les critères d'acceptation et les fichiers concernés.
+      Les statuts et notes sont sauvegardés localement dans le navigateur.
+    </p>
+    <div class="intro-grid">
+      <div class="intro-pill">Stack : Vite + React JSX</div>
+      <div class="intro-pill">Backend : Supabase</div>
+      <div class="intro-pill">Priorité : RLS et rôles</div>
+      <div class="intro-pill">Recette : flux client/admin</div>
+    </div>
+  </section>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all', this)">Tout voir</button>
+    <button class="filter-btn" onclick="setFilter('critical', this)">Critiques P0</button>
+    <button class="filter-btn" onclick="setFilter('high', this)">Haute priorité P1</button>
+    <button class="filter-btn" onclick="setFilter('medium', this)">Moyenne P2</button>
+    <button class="filter-btn" onclick="setFilter('todo', this)">À faire</button>
+    <button class="filter-btn" onclick="setFilter('wip', this)">En cours</button>
+    <button class="filter-btn" onclick="setFilter('done', this)">Terminés</button>
+  </div>
+
+  <div id="cards-container"></div>
+</main>
+
+<button class="export-btn" onclick="exportMD()">Exporter en Markdown</button>
+
+<script>
+const ITEMS = [
+  {
+    id: "p0-role-escalation",
+    priority: "critical",
+    emoji: "🔴",
+    title: "Bloquer toute escalade de rôle dans profiles",
+    area: "Sécurité RLS · Authentification",
+    file: "AGENTS.md",
+    line: "244-245",
+    detail: "La policy actuelle permet à un utilisateur de modifier son propre profil sans limiter les colonnes sensibles. Un client pourrait tenter de modifier role, is_validated ou des champs d'approbation via l'API Supabase.",
+    expected: [
+      "Un client ne peut pas modifier son rôle, son statut de validation ou ses champs d'approbation.",
+      "Un client peut seulement modifier ses informations autorisées : nom, société, SIRET, téléphone et adresse si retenue.",
+      "Les admins et développeurs gardent les droits de gestion nécessaires.",
+      "La règle est appliquée côté Supabase, pas uniquement côté frontend."
+    ]
+  },
+  {
+    id: "p0-contact-messages-rls",
+    priority: "critical",
+    emoji: "🔴",
+    title: "Sécuriser la table messages",
+    area: "Sécurité RLS · Données personnelles",
+    file: "AGENTS.md",
+    line: "460-467",
+    detail: "Les policies SELECT, UPDATE et DELETE sur messages utilisent USING (true). Cela expose potentiellement les messages de contact à tout client ou appel anonyme selon les grants Supabase.",
+    expected: [
+      "Seuls admin, developpeur et éventuellement commercial peuvent lire les messages.",
+      "Seuls admin/developpeur peuvent supprimer les messages si cette boîte est conservée.",
+      "L'envoi public reste possible uniquement si la logique messages est conservée.",
+      "La page admin/messages continue de fonctionner pour les rôles autorisés."
+    ]
+  },
+  {
+    id: "p0-catalog-crud-rls",
+    priority: "critical",
+    emoji: "🔴",
+    title: "Restreindre le CRUD catégories, sous-catégories et produits",
+    area: "Sécurité RLS · Catalogue",
+    file: "AGENTS.md",
+    line: "283-284, 308-309, 338-339",
+    detail: "Les policies de modification du catalogue se basent sur auth.role() = authenticated. Cela donne trop de droits à tout utilisateur connecté.",
+    expected: [
+      "Un client validé ne peut pas créer, modifier ou supprimer une catégorie, sous-catégorie ou produit via Supabase.",
+      "Un commercial ne peut pas modifier le catalogue sauf décision métier explicite.",
+      "Les admins/développeurs peuvent gérer le catalogue depuis l'interface.",
+      "Les visiteurs gardent la lecture publique des catégories et produits si ce choix métier reste valide."
+    ]
+  },
+  {
+    id: "p1-delete-user-function",
+    priority: "high",
+    emoji: "🟠",
+    title: "Créer l'Edge Function delete-user",
+    area: "Gestion utilisateurs · Admin",
+    file: "src/pages/AdminUsersPage.jsx",
+    line: "111-120",
+    detail: "Le frontend appelle supabase.functions.invoke('delete-user'), mais la fonction n'existe pas dans supabase/functions. La suppression définitive d'un compte échouera en production.",
+    expected: [
+      "La fonction vérifie que l'appelant est admin ou developpeur.",
+      "La fonction supprime le compte Auth Supabase et le profil associé.",
+      "Une entrée est écrite dans deleted_users_logs avec raison, email, identité supprimée et admin responsable.",
+      "Un client ou commercial reçoit une erreur 403 s'il appelle cette fonction."
+    ]
+  },
+  {
+    id: "p1-send-email-types",
+    priority: "high",
+    emoji: "🟠",
+    title: "Corriger send-email pour les notifications réelles",
+    area: "Notifications email",
+    file: "supabase/functions/send-email/index.ts",
+    line: "24-67",
+    detail: "Le frontend envoie type='new-lead' et type='lead-message', mais la fonction ne gère que type='contact' puis attend to/subject/html en fallback. Les notifications métier retournent donc une erreur 400.",
+    expected: [
+      "type='new-lead' envoie un email à l'adresse admin configurée.",
+      "type='lead-message' envoie un email au client ou commercial concerné.",
+      "type='contact' est conservé seulement si la table messages reste dans le périmètre.",
+      "La fonction ne doit pas servir de relais email générique non contrôlé."
+    ]
+  },
+  {
+    id: "p1-lead-messages-schema",
+    priority: "high",
+    emoji: "🟠",
+    title: "Aligner lead_messages avec le chat et les pièces jointes",
+    area: "Demandes clients · Chat",
+    file: "AGENTS.md",
+    line: "409-416",
+    detail: "Le chat insère file_url, file_name et file_type dans lead_messages, mais le schéma documenté ne contient pas ces colonnes.",
+    expected: [
+      "Si les pièces jointes sont conservées, lead_messages contient file_url, file_name et file_type.",
+      "Le bucket lead-files existe avec des policies adaptées.",
+      "L'envoi d'un message texte seul continue de fonctionner.",
+      "Un client ne peut lire que les fichiers liés à ses propres demandes."
+    ]
+  },
+  {
+    id: "p1-validation-status",
+    priority: "high",
+    emoji: "🟠",
+    title: "Unifier validation compte et statut approuvé",
+    area: "Authentification · Catalogues",
+    file: "src/pages/AdminUsersPage.jsx · AGENTS.md",
+    line: "82-85 / 497-503",
+    detail: "Le code valide un compte avec is_validated=true, tandis que certaines policies catalogues vérifient status='approuve'. Un client validé peut donc rester bloqué sur les catalogues.",
+    expected: [
+      "La validation admin met à jour tous les champs réellement utilisés.",
+      "Le projet choisit une source de vérité : is_validated, status, ou les deux mais synchronisés.",
+      "Un client validé accède aux catalogues.",
+      "Un client en attente reste bloqué."
+    ]
+  },
+  {
+    id: "p1-storage-catalogues",
+    priority: "high",
+    emoji: "🟠",
+    title: "Aligner les buckets Storage des catalogues",
+    area: "Catalogues · Storage",
+    file: "src/pages/CataloguesPage.jsx · AGENTS.md",
+    line: "75 / 564-585",
+    detail: "Le schéma crée un bucket catalogues privé, mais CataloguesPage upload les PDF dans images et utilise getPublicUrl.",
+    expected: [
+      "Les PDF catalogues sont stockés dans le bucket retenu et documenté.",
+      "Si le bucket est privé, le téléchargement utilise des signed URLs.",
+      "Seuls admin/developpeur peuvent uploader, modifier et supprimer.",
+      "Un client validé peut télécharger les catalogues autorisés."
+    ]
+  },
+  {
+    id: "p1-theme-customizer",
+    priority: "high",
+    emoji: "🟠",
+    title: "Corriger la sauvegarde de la personnalisation",
+    area: "Paramètres site",
+    file: "src/components/ThemeCustomizer.jsx · src/context/ThemeContext.jsx",
+    line: "28-31 / 33",
+    detail: "ThemeCustomizer sauvegarde dans site_settings.id='current', alors que ThemeContext lit site_settings.id='main'. Les réglages ne persistent donc pas correctement.",
+    expected: [
+      "Le customizer écrit dans id='main'.",
+      "Le succès n'est affiché que si une ligne a réellement été modifiée.",
+      "Les écritures site_settings sont réservées aux admins/développeurs.",
+      "Après rechargement, les couleurs et textes sauvegardés sont encore visibles."
+    ]
+  },
+  {
+    id: "p1-contact-system-choice",
+    priority: "high",
+    emoji: "🟠",
+    title: "Clarifier le système contact : messages ou lead_requests",
+    area: "Formulaire contact · Demandes",
+    file: "src/pages/ContactPage.jsx · src/pages/AdminMessagesPage.jsx",
+    line: "57-78 / 17-20",
+    detail: "La page contact actuelle crée un lead_request et un lead_message, tandis qu'AdminMessagesPage lit encore la table messages. Deux systèmes de contact coexistent.",
+    expected: [
+      "Le projet choisit une logique principale : demandes suivies ou boîte messages séparée.",
+      "L'interface admin correspond au système choisi.",
+      "Les anciennes tables/pages inutiles sont retirées ou clairement maintenues.",
+      "Les RLS sont alignées sur la décision métier."
+    ]
+  },
+  {
+    id: "p2-profile-fields",
+    priority: "medium",
+    emoji: "🟡",
+    title: "Unifier les champs adresse client",
+    area: "Profil client · Données",
+    file: "src/pages/admin/AdminLeadDetailsPage.jsx · AGENTS.md",
+    line: "136 / 222-223",
+    detail: "Le code lit address, ville et code_postal, alors que le schéma documente zip_code et city. Cette incohérence rend les données adresse fragiles.",
+    expected: [
+      "Une seule convention de champs adresse est retenue.",
+      "Le schéma et le frontend utilisent les mêmes noms.",
+      "Le profil client complet affiche correctement la ville et le code postal.",
+      "AGENTS.md reflète le schéma réel."
+    ]
+  },
+  {
+    id: "p2-lint-clean",
+    priority: "medium",
+    emoji: "🟡",
+    title: "Corriger les erreurs lint",
+    area: "Qualité code",
+    file: "eslint / src",
+    line: "npm run lint",
+    detail: "npm run lint échoue avec 5 erreurs : variables inutilisées et exports Fast Refresh dans les contextes.",
+    expected: [
+      "npm run lint passe sans erreur.",
+      "Les imports et variables inutilisés sont supprimés.",
+      "Les exports de hooks/contextes sont déplacés ou la règle est justifiée localement.",
+      "Les warnings React Hooks critiques sont examinés."
+    ]
+  },
+  {
+    id: "p2-deps-audit",
+    priority: "medium",
+    emoji: "🟡",
+    title: "Mettre à jour react-router-dom et traiter npm audit",
+    area: "Dépendances",
+    file: "package.json",
+    line: "react-router-dom",
+    detail: "npm audit --omit=dev signale des vulnérabilités via react-router-dom/react-router, dont une high.",
+    expected: [
+      "npm audit --omit=dev ne signale plus de vulnérabilité high ou critique liée aux dépendances directes.",
+      "Le routing existant reste fonctionnel après mise à jour.",
+      "Le build production passe après mise à jour."
+    ]
+  },
+  {
+    id: "p2-bundle-size",
+    priority: "medium",
+    emoji: "🟡",
+    title: "Réduire ou accepter explicitement le bundle principal",
+    area: "Performance",
+    file: "dist/assets/index-*.js",
+    line: "build warning",
+    detail: "Le build produit un chunk JS principal supérieur à 500 kB. Ce n'est pas bloquant, mais cela peut dégrader le chargement initial.",
+    expected: [
+      "Les pages admin lourdes sont candidates au lazy loading.",
+      "Le warning Vite est traité ou documenté comme acceptable.",
+      "Le build continue de passer."
+    ]
+  }
+];
+
+let state = {};
+let currentFilter = "all";
+const STORAGE_KEY = "cdc_soparimex_audit_fonctionnel";
+
+function loadState() {
+  try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch { state = {}; }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  document.getElementById("last-updated").textContent = "Sauvegardé à " + new Date().toLocaleTimeString("fr-FR");
+}
+
+function getItemState(id) {
+  return state[id] || { status: "todo", note: "" };
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function render() {
+  const container = document.getElementById("cards-container");
+  container.innerHTML = "";
+
+  const groups = [
+    { key: "critical", label: "Critiques P0 — Sécurité immédiate" },
+    { key: "high", label: "Haute priorité P1 — Parcours bloquants" },
+    { key: "medium", label: "Moyenne priorité P2 — Qualité et robustesse" },
+  ];
+
+  groups.forEach(({ key, label }) => {
+    const items = ITEMS.filter(item => {
+      if (item.priority !== key) return false;
+      if (currentFilter === "all" || currentFilter === key) return true;
+      if (["todo", "wip", "done"].includes(currentFilter)) return getItemState(item.id).status === currentFilter;
+      return false;
+    });
+
+    if (items.length === 0) return;
+
+    const section = document.createElement("section");
+    section.className = "section";
+    section.innerHTML = `<div class="section-title">${label}</div>`;
+
+    items.forEach(item => {
+      const s = getItemState(item.id);
+      const card = document.createElement("article");
+      card.className = `card${s.status === "done" ? " done" : ""}`;
+      card.dataset.priority = item.priority;
+      card.innerHTML = `
+        <div class="card-header" onclick="toggleDetail('${item.id}')">
+          <div class="priority-badge">${item.emoji}</div>
+          <div class="card-body">
+            <div class="card-title">${escapeHtml(item.title)}</div>
+            <div class="card-meta">
+              <strong>${escapeHtml(item.area)}</strong><br>
+              ${escapeHtml(item.file)}${item.line ? " · Ligne " + escapeHtml(item.line) : ""}
+            </div>
+          </div>
+          <div class="status-group" onclick="event.stopPropagation()">
+            <button class="status-btn todo ${s.status === "todo" ? "active" : ""}" onclick="setStatus('${item.id}','todo')">À faire</button>
+            <button class="status-btn wip ${s.status === "wip" ? "active" : ""}" onclick="setStatus('${item.id}','wip')">En cours</button>
+            <button class="status-btn done ${s.status === "done" ? "active" : ""}" onclick="setStatus('${item.id}','done')">Terminé</button>
+          </div>
+        </div>
+        <div class="card-detail" id="detail-${item.id}" style="display:none">
+          <div class="detail-block">
+            <div class="detail-title">Constat</div>
+            <p class="detail-text">${escapeHtml(item.detail)}</p>
+          </div>
+          <div class="detail-block">
+            <div class="detail-title">Critères d'acceptation</div>
+            <ul class="acceptance-list">
+              ${item.expected.map(point => `<li>${escapeHtml(point)}</li>`).join("")}
+            </ul>
+          </div>
+          <div class="note-label">Notes</div>
+          <textarea placeholder="Ajouter une note, une solution, une PR..." onchange="setNote('${item.id}',this.value)">${escapeHtml(s.note || "")}</textarea>
+        </div>
+      `;
+      section.appendChild(card);
+    });
+
+    container.appendChild(section);
+  });
+
+  updateProgress();
+}
+
+function toggleDetail(id) {
+  const el = document.getElementById("detail-" + id);
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+function setStatus(id, status) {
+  state[id] = { ...getItemState(id), status };
+  saveState();
+  render();
+}
+
+function setNote(id, note) {
+  state[id] = { ...getItemState(id), note };
+  saveState();
+}
+
+function setFilter(filter, button) {
+  currentFilter = filter;
+  document.querySelectorAll(".filter-btn").forEach(btn => btn.classList.remove("active"));
+  if (button) button.classList.add("active");
+  render();
+}
+
+function updateProgress() {
+  const total = ITEMS.length;
+  const done = ITEMS.filter(i => getItemState(i.id).status === "done").length;
+  const wip = ITEMS.filter(i => getItemState(i.id).status === "wip").length;
+  const todo = total - done - wip;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("progress-label").textContent = pct + "% terminé";
+  document.getElementById("count-todo").textContent = todo;
+  document.getElementById("count-wip").textContent = wip;
+  document.getElementById("count-done").textContent = done;
+}
+
+function exportMD() {
+  const lines = [
+    "# Cahier des charges fonctionnel — Audit Soparimex",
+    "",
+    `Exporté le ${new Date().toLocaleDateString("fr-FR")}`,
+    ""
+  ];
+  const groups = [
+    { key: "critical", label: "## Critiques P0" },
+    { key: "high", label: "## Haute priorité P1" },
+    { key: "medium", label: "## Moyenne priorité P2" },
+  ];
+
+  groups.forEach(({ key, label }) => {
+    lines.push(label, "");
+    ITEMS.filter(i => i.priority === key).forEach(item => {
+      const s = getItemState(item.id);
+      const icon = s.status === "done" ? "[x]" : s.status === "wip" ? "[~]" : "[ ]";
+      lines.push(`${icon} ${item.title}`);
+      lines.push(`- Périmètre : ${item.area}`);
+      lines.push(`- Fichier : ${item.file}${item.line ? " · Ligne " + item.line : ""}`);
+      lines.push(`- Constat : ${item.detail}`);
+      lines.push("- Critères d'acceptation :");
+      item.expected.forEach(point => lines.push(`  - ${point}`));
+      if (s.note) lines.push(`- Note : ${s.note}`);
+      lines.push("");
+    });
+  });
+
+  const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "cahier-des-charges-fonctionnel-audit-soparimex.md";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+loadState();
+render();
+if (localStorage.getItem(STORAGE_KEY)) {
+  document.getElementById("last-updated").textContent = "Dernière sauvegarde chargée";
+}
+</script>
+</body>
+</html>

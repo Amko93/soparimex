@@ -187,6 +187,7 @@ const AdminUsersPage = () => {
     const r = (role || '').toLowerCase();
     if (r === 'pending') return 'En attente';
     if (r === 'client') return 'Client';
+    if (r === 'commercial') return 'Commercial';
     if (r === 'admin') return 'Admin';
     if (r === 'developpeur') return 'Développeur';
     return role || '—';
@@ -196,6 +197,7 @@ const AdminUsersPage = () => {
     const r = (role || '').toLowerCase();
     if (r === 'pending') return 'bg-amber-100 text-amber-700';
     if (r === 'client') return 'bg-blue-50 text-blue-600';
+    if (r === 'commercial') return 'bg-teal-50 text-teal-600';
     if (r === 'admin' || r === 'developpeur') return 'bg-purple-100 text-purple-600';
     return 'bg-slate-100 text-slate-600';
   };

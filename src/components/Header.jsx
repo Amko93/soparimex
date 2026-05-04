@@ -59,6 +59,7 @@ const Header = () => {
       subscription.unsubscribe();
       document.removeEventListener('mousedown', handleClickOutside);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- LOGIQUE LIVE SEARCH ---

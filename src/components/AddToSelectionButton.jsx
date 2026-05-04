@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSelection } from '../context/SelectionContext';
 import { supabase } from '../supabaseClient';
 import { Plus, Minus } from 'lucide-react';
@@ -11,7 +10,6 @@ import { Plus, Minus } from 'lucide-react';
  * @param {string} [variant] - 'card' | 'detail' pour adapter le style
  */
 const AddToSelectionButton = ({ product, className = '', variant = 'card' }) => {
-  const navigate = useNavigate();
   const { addToSelection, removeFromSelection, isInSelection } = useSelection();
   const [session, setSession] = useState(null);
 

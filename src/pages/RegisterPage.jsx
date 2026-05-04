@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { UserPlus, FileText, CheckCircle2, AlertCircle, Loader, Eye, EyeOff } from 'lucide-react';
 
 const RegisterPage = () => {
-  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });

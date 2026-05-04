@@ -114,6 +114,7 @@ const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null })
       clearTimeout(fallback);
       subscription?.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {

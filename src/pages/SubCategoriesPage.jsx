@@ -26,6 +26,7 @@ const SubCategoryProductsPage = () => {
   useEffect(() => {
     fetchData();
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchData = async () => {

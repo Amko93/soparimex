@@ -47,6 +47,7 @@ const AdminLeadsPage = () => {
     } else if (r === 'commercial') {
       setFilter(FILTER_NEW);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.role]);
 
   const loadCurrentUser = async () => {

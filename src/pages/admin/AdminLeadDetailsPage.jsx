@@ -58,6 +58,7 @@ const AdminLeadDetailsPage = () => {
   useEffect(() => {
     if (!id || !currentUser) return;
     fetchLead();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, currentUser?.id]);
 
   useEffect(() => {

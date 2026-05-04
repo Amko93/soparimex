@@ -74,6 +74,7 @@ export const SelectionProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook lié au contexte, fichier unique intentionnel
 export const useSelection = () => {
   const ctx = useContext(SelectionContext);
   if (!ctx) throw new Error('useSelection must be used within SelectionProvider');

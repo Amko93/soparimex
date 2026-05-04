@@ -49,6 +49,7 @@ const DashboardPage = () => {
       setLoadError(true); // timeout dépassé → profil non chargé
     }, 10000);
     return () => clearTimeout(fallback);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProfile = async () => {
