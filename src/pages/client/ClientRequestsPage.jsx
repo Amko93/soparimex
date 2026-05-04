@@ -41,7 +41,7 @@ const ClientRequestsPage = () => {
     try {
       const { data, error } = await supabase
         .from('lead_requests')
-        .select('id, created_at, description, status')
+        .select('id, created_at, title, status')
         .eq('client_id', userId)
         .order('created_at', { ascending: false });
 
@@ -64,12 +64,6 @@ const ClientRequestsPage = () => {
       month: '2-digit',
       year: 'numeric',
     });
-  };
-
-  const descriptionExcerpt = (text, maxLen = 80) => {
-    if (!text || !text.trim()) return '—';
-    const t = text.trim();
-    return t.length <= maxLen ? t : t.slice(0, maxLen) + '…';
   };
 
   const statusBadgeClass = (status) => {
@@ -120,7 +114,7 @@ const ClientRequestsPage = () => {
             <ClipboardList className="text-blue-600" size={32} />
             Mes demandes
           </h1>
-          <p className="text-slate-500 mt-1">Suivez l'état de vos demandes de devis.</p>
+          <p className="text-slate-500 mt-1">Suivez l'état de vos demandes.</p>
         </div>
 
         {requests.length === 0 ? (
@@ -141,7 +135,7 @@ const ClientRequestsPage = () => {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap">Date</th>
-                    <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Description</th>
+                    <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Titre</th>
                     <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap">Statut</th>
                     <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right whitespace-nowrap">Action</th>
                   </tr>
@@ -150,7 +144,7 @@ const ClientRequestsPage = () => {
                   {requests.map((req) => (
                     <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">{formatDate(req.created_at)}</td>
-                      <td className="px-4 py-4 text-sm text-slate-700">{descriptionExcerpt(req.description)}</td>
+                      <td className="px-4 py-4 text-sm text-slate-700 font-medium">{req.title || '—'}</td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center text-xs font-bold uppercase px-2.5 py-1 rounded-md ${statusBadgeClass(req.status)}`}>
                           {statusLabel(req.status)}
