@@ -121,7 +121,7 @@ const ClientRequestDetailsPage = () => {
       if (leadData.assigned_to) {
         const { data: commercialData } = await supabase
           .from('profiles')
-          .select('id, full_name, avatar_url, job_title, phone, email, city, bio')
+          .select('id, full_name, avatar_url, job_title, phone, email, city, bio, bio_visible')
           .eq('id', leadData.assigned_to)
           .single();
         setAssignedCommercial(commercialData || null);
@@ -341,8 +341,8 @@ const ClientRequestDetailsPage = () => {
                   </div>
                 </div>
               </div>
-              {/* Bio */}
-              {assignedCommercial.bio && (
+              {/* Bio — uniquement si visible par les clients */}
+              {assignedCommercial.bio && assignedCommercial.bio_visible !== false && (
                 <p className="mt-4 pt-4 border-t border-slate-100 text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
                   {assignedCommercial.bio}
                 </p>

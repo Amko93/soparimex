@@ -12,6 +12,8 @@ import {
   MapPin,
   FileText,
   X,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 const CommercialProfilePage = () => {
@@ -24,12 +26,13 @@ const CommercialProfilePage = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [form, setForm] = useState({
-    full_name: '',
-    job_title: '',
-    phone: '',
-    city: '',
-    bio: '',
-    avatar_url: '',
+    full_name:   '',
+    job_title:   '',
+    phone:       '',
+    city:        '',
+    bio:         '',
+    avatar_url:  '',
+    bio_visible: true,
   });
 
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -41,19 +44,20 @@ const CommercialProfilePage = () => {
 
       const { data } = await supabase
         .from('profiles')
-        .select('id, role, full_name, job_title, phone, city, bio, avatar_url')
+        .select('id, role, full_name, job_title, phone, city, bio, avatar_url, bio_visible')
         .eq('id', session.user.id)
         .single();
 
       if (data) {
         setCurrentUser({ id: data.id, role: data.role });
         setForm({
-          full_name:  data.full_name  || '',
-          job_title:  data.job_title  || '',
-          phone:      data.phone      || '',
-          city:       data.city       || '',
-          bio:        data.bio        || '',
-          avatar_url: data.avatar_url || '',
+          full_name:   data.full_name   || '',
+          job_title:   data.job_title   || '',
+          phone:       data.phone       || '',
+          city:        data.city        || '',
+          bio:         data.bio         || '',
+          avatar_url:  data.avatar_url  || '',
+          bio_visible: data.bio_visible !== false,
         });
         if (data.avatar_url) setPreviewUrl(data.avatar_url);
       }
@@ -130,8 +134,9 @@ const CommercialProfilePage = () => {
           job_title:  form.job_title.trim()  || null,
           phone:      form.phone.trim()      || null,
           city:       form.city.trim()       || null,
-          bio:        form.bio.trim()        || null,
-          avatar_url: form.avatar_url        || null,
+          bio:         form.bio.trim()        || null,
+          avatar_url:  form.avatar_url        || null,
+          bio_visible: form.bio_visible,
           updated_at: new Date().toISOString(),
         })
         .eq('id', currentUser.id);
@@ -308,10 +313,24 @@ const CommercialProfilePage = () => {
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-bold text-slate-600 mb-1.5">
-                <FileText size={14} className="inline mr-1" />
-                Présentation courte
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-bold text-slate-600 flex items-center gap-1">
+                  <FileText size={14} />
+                  Présentation courte
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, bio_visible: !f.bio_visible }))}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border transition ${
+                    form.bio_visible
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                      : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                  }`}
+                  title={form.bio_visible ? 'Visible par les clients — cliquer pour masquer' : 'Masquée aux clients — cliquer pour afficher'}
+                >
+                  {form.bio_visible ? <><Eye size={13} /> Visible clients</> : <><EyeOff size={13} /> Masquée clients</>}
+                </button>
+              </div>
               <textarea
                 value={form.bio}
                 onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
