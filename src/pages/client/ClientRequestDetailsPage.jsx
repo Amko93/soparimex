@@ -16,7 +16,6 @@ import {
 
 const ClientRequestDetailsPage = () => {
   const { id } = useParams();
-  const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const [lead, setLead] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -29,14 +28,22 @@ const ClientRequestDetailsPage = () => {
   const fileInputRef = useRef(null);
   const toast = useToast();
   const [sending, setSending] = useState(false);
+  const isInitialLoad = useRef(true);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 80;
-    if (isNearBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isInitialLoad.current) {
+      // Premier chargement : aller directement en bas sans animation
+      container.scrollTop = container.scrollHeight;
+      isInitialLoad.current = false;
+    } else {
+      // Nouveau message temps réel : ne scroller que si déjà proche du bas
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 120;
+      if (isNearBottom) {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      }
     }
   }, [messages]);
 
@@ -331,7 +338,6 @@ const ClientRequestDetailsPage = () => {
                   </div>
                 ))
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-100 bg-slate-50">

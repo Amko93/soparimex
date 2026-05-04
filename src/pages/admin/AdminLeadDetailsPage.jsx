@@ -23,8 +23,8 @@ import {
 
 const AdminLeadDetailsPage = () => {
   const { id } = useParams();
-  const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const isInitialLoad = useRef(true);
   const [lead, setLead] = useState(null);
   const [messages, setMessages] = useState([]);
   const [clientProfile, setClientProfile] = useState(null);
@@ -44,10 +44,15 @@ const AdminLeadDetailsPage = () => {
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 80;
-    if (isNearBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isInitialLoad.current) {
+      container.scrollTop = container.scrollHeight;
+      isInitialLoad.current = false;
+    } else {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 120;
+      if (isNearBottom) {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      }
     }
   }, [messages]);
 
@@ -443,7 +448,6 @@ const AdminLeadDetailsPage = () => {
                   </div>
                 ))
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-100 bg-slate-50">
