@@ -2,12 +2,15 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import AdminNav from '../../components/AdminNav';
+import { useToast } from '../../context/ToastContext';
 import {
   Loader,
   Archive,
   Eye,
   Search,
   X,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 
 const AdminLeadsArchivePage = () => {
@@ -16,6 +19,9 @@ const AdminLeadsArchivePage = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     loadCurrentUser();
@@ -106,6 +112,24 @@ const AdminLeadsArchivePage = () => {
     });
   }, [leads, searchTerm, profilesMap]);
 
+  const handleDelete = async (leadId) => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('lead_requests').delete().eq('id', leadId);
+      if (error) throw error;
+      setLeads((prev) => prev.filter((l) => l.id !== leadId));
+      setConfirmDeleteId(null);
+      toast('Dossier supprimé définitivement.', 'success');
+    } catch (err) {
+      console.error(err);
+      toast('Erreur lors de la suppression : ' + err.message, 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'developpeur';
+
   const formatDate = (dateString) => {
     if (!dateString) return '—';
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -183,35 +207,71 @@ const AdminLeadsArchivePage = () => {
                     <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap">Date</th>
                     <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap">Titre</th>
                     <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap">Client</th>
-                    {(currentUser?.role === 'admin' || currentUser?.role === 'developpeur') && (
+                    {isAdmin && (
                       <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap">Commercial</th>
                     )}
-                    <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right whitespace-nowrap">Action</th>
+                    <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredLeads.length === 0 ? (
                     <tr>
-                      <td colSpan={currentUser?.role === 'admin' || currentUser?.role === 'developpeur' ? 5 : 4} className="px-4 py-16 text-center text-slate-500 font-medium">
+                      <td colSpan={isAdmin ? 5 : 4} className="px-4 py-16 text-center text-slate-500 font-medium">
                         {searchTerm ? 'Aucun résultat pour cette recherche.' : 'Aucune archive.'}
                       </td>
                     </tr>
                   ) : (
                     filteredLeads.map((lead) => (
-                      <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr
+                        key={lead.id}
+                        className={`transition-colors ${confirmDeleteId === lead.id ? 'bg-red-50' : 'hover:bg-slate-50/50'}`}
+                      >
                         <td className="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">{formatDate(lead.created_at)}</td>
                         <td className="px-4 py-4 font-semibold text-slate-800">{lead.title || '—'}</td>
                         <td className="px-4 py-4 text-sm text-slate-600">{getClientLabel(lead)}</td>
-                        {(currentUser?.role === 'admin' || currentUser?.role === 'developpeur') && (
+                        {isAdmin && (
                           <td className="px-4 py-4 text-sm text-slate-600">{getAssigneeLabel(lead)}</td>
                         )}
                         <td className="px-4 py-4 text-right">
-                          <Link
-                            to={`/admin/leads/${lead.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-blue-100 hover:text-blue-600 transition"
-                          >
-                            <Eye size={14} /> Voir le dossier
-                          </Link>
+                          {confirmDeleteId === lead.id ? (
+                            <div className="inline-flex items-center gap-2 justify-end">
+                              <span className="text-xs text-red-600 font-bold flex items-center gap-1">
+                                <AlertTriangle size={13} /> Supprimer définitivement ?
+                              </span>
+                              <button
+                                onClick={() => handleDelete(lead.id)}
+                                disabled={deleting}
+                                className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition disabled:opacity-50"
+                              >
+                                {deleting ? 'Suppression...' : 'Confirmer'}
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                disabled={deleting}
+                                className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition"
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center gap-2">
+                              <Link
+                                to={`/admin/leads/${lead.id}`}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-blue-100 hover:text-blue-600 transition"
+                              >
+                                <Eye size={14} /> Voir
+                              </Link>
+                              {isAdmin && (
+                                <button
+                                  onClick={() => setConfirmDeleteId(lead.id)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-red-400 text-xs font-bold hover:bg-red-50 hover:text-red-600 transition"
+                                  title="Supprimer des archives"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
