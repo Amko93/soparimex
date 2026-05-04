@@ -22,6 +22,8 @@ import {
   AlertTriangle,
   X,
   Save,
+  Briefcase,
+  MapPin,
 } from 'lucide-react';
 
 const AdminUserProfilePage = () => {
@@ -225,10 +227,23 @@ const AdminUserProfilePage = () => {
 
             {/* Carte identité */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-slate-900 flex items-center justify-center text-white font-black text-2xl mx-auto mb-4">
-                {getInitials(profile.full_name)}
+              <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-4 flex-shrink-0 border border-slate-200">
+                {profile.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.full_name || 'Profil'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-900 flex items-center justify-center text-white font-black text-2xl">
+                    {getInitials(profile.full_name)}
+                  </div>
+                )}
               </div>
               <h1 className="text-xl font-black text-slate-900">{profile.full_name || '—'}</h1>
+              {profile.job_title && (
+                <p className="text-blue-600 font-bold text-sm mt-0.5">{profile.job_title}</p>
+              )}
               {profile.societe && (
                 <p className="text-slate-500 font-medium text-sm mt-1 flex items-center justify-center gap-1">
                   <Building2 size={14} /> {profile.societe}
@@ -318,6 +333,46 @@ const AdminUserProfilePage = () => {
 
           {/* ─── COLONNE DROITE ─── */}
           <div className="lg:col-span-2 space-y-6">
+
+            {/* Fiche profil commercial/admin */}
+            {(['admin', 'developpeur', 'commercial'].includes((profile.role || '').toLowerCase())) && (
+              (profile.job_title || profile.bio || profile.city) ? (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <Briefcase size={14} /> Fiche profil
+                  </h2>
+                  <div className="flex gap-4 flex-wrap">
+                    {profile.avatar_url && (
+                      <img
+                        src={profile.avatar_url}
+                        alt={profile.full_name || 'Photo'}
+                        className="w-16 h-16 rounded-xl object-cover border border-slate-200 flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      {profile.job_title && (
+                        <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                          <Briefcase size={14} className="text-slate-400" /> {profile.job_title}
+                        </p>
+                      )}
+                      {profile.city && (
+                        <p className="text-sm text-slate-500 flex items-center gap-1.5">
+                          <MapPin size={14} className="text-slate-400" /> {profile.city}
+                        </p>
+                      )}
+                      {profile.bio && (
+                        <p className="text-sm text-slate-600 leading-relaxed mt-2 whitespace-pre-wrap">{profile.bio}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-5 text-center text-slate-400 text-sm">
+                  <Briefcase size={20} className="mx-auto mb-2 opacity-40" />
+                  Fiche profil non renseignée.
+                </div>
+              )
+            )}
 
             {/* Stats rapides */}
             <div className="grid grid-cols-2 gap-4">
