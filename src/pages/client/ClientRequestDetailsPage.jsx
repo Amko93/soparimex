@@ -12,6 +12,9 @@ import {
   X,
   FileText,
   Download,
+  Mail,
+  Phone,
+  MapPin,
 } from 'lucide-react';
 
 const ClientRequestDetailsPage = () => {
@@ -118,7 +121,7 @@ const ClientRequestDetailsPage = () => {
       if (leadData.assigned_to) {
         const { data: commercialData } = await supabase
           .from('profiles')
-          .select('id, full_name, avatar_url, job_title, phone')
+          .select('id, full_name, avatar_url, job_title, phone, email, city, bio')
           .eq('id', leadData.assigned_to)
           .single();
         setAssignedCommercial(commercialData || null);
@@ -291,32 +294,58 @@ const ClientRequestDetailsPage = () => {
         <div className="space-y-4">
           {/* Carte profil du commercial assigné */}
           {assignedCommercial ? (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4 flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 flex items-center justify-center border border-slate-200">
-                {assignedCommercial.avatar_url ? (
-                  <img
-                    src={assignedCommercial.avatar_url}
-                    alt={assignedCommercial.full_name || 'Commercial'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User size={28} className="text-slate-400" />
-                )}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+              <div className="flex items-start gap-4">
+                {/* Avatar */}
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 flex items-center justify-center border border-slate-200">
+                  {assignedCommercial.avatar_url ? (
+                    <img
+                      src={assignedCommercial.avatar_url}
+                      alt={assignedCommercial.full_name || 'Commercial'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User size={28} className="text-slate-400" />
+                  )}
+                </div>
+                {/* Infos principales */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-0.5">Votre commercial</p>
+                  <p className="font-black text-slate-900">{assignedCommercial.full_name || '—'}</p>
+                  {assignedCommercial.job_title && (
+                    <p className="text-sm text-slate-500">{assignedCommercial.job_title}</p>
+                  )}
+                  <div className="mt-2 space-y-1">
+                    {assignedCommercial.email && (
+                      <p className="text-sm text-slate-600 flex items-center gap-1.5">
+                        <Mail size={13} className="text-slate-400 flex-shrink-0" />
+                        <a href={`mailto:${assignedCommercial.email}`} className="hover:text-blue-600 transition truncate">
+                          {assignedCommercial.email}
+                        </a>
+                      </p>
+                    )}
+                    {assignedCommercial.phone && (
+                      <p className="text-sm text-slate-600 flex items-center gap-1.5">
+                        <Phone size={13} className="text-slate-400 flex-shrink-0" />
+                        <a href={`tel:${assignedCommercial.phone}`} className="hover:text-blue-600 transition">
+                          {assignedCommercial.phone}
+                        </a>
+                      </p>
+                    )}
+                    {assignedCommercial.city && (
+                      <p className="text-sm text-slate-500 flex items-center gap-1.5">
+                        <MapPin size={13} className="text-slate-400 flex-shrink-0" />
+                        {assignedCommercial.city}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-0.5">Votre commercial</p>
-                <p className="font-black text-slate-900 truncate">{assignedCommercial.full_name || '—'}</p>
-                {assignedCommercial.job_title && (
-                  <p className="text-sm text-slate-500 truncate">{assignedCommercial.job_title}</p>
-                )}
-              </div>
-              {assignedCommercial.phone && (
-                <a
-                  href={`tel:${assignedCommercial.phone}`}
-                  className="flex-shrink-0 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition"
-                >
-                  {assignedCommercial.phone}
-                </a>
+              {/* Bio */}
+              {assignedCommercial.bio && (
+                <p className="mt-4 pt-4 border-t border-slate-100 text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                  {assignedCommercial.bio}
+                </p>
               )}
             </div>
           ) : (
