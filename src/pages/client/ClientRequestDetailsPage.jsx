@@ -28,6 +28,7 @@ const ClientRequestDetailsPage = () => {
   const fileInputRef = useRef(null);
   const toast = useToast();
   const [sending, setSending] = useState(false);
+  const [assignedCommercial, setAssignedCommercial] = useState(null);
   const isInitialLoad = useRef(true);
 
   useEffect(() => {
@@ -112,6 +113,18 @@ const ClientRequestDetailsPage = () => {
       }
 
       setLead(leadData);
+
+      // Charger le profil du commercial assigné
+      if (leadData.assigned_to) {
+        const { data: commercialData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, job_title, phone')
+          .eq('id', leadData.assigned_to)
+          .single();
+        setAssignedCommercial(commercialData || null);
+      } else {
+        setAssignedCommercial(null);
+      }
 
       const [messagesRes] = await Promise.all([
         supabase
@@ -275,12 +288,53 @@ const ClientRequestDetailsPage = () => {
           Demande du {lead.created_at ? new Date(lead.created_at).toLocaleDateString('fr-FR') : '—'}
         </p>
 
-        <div>
-          {/* Chat pleine largeur */}
+        <div className="space-y-4">
+          {/* Carte profil du commercial assigné */}
+          {assignedCommercial ? (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4 flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 flex items-center justify-center border border-slate-200">
+                {assignedCommercial.avatar_url ? (
+                  <img
+                    src={assignedCommercial.avatar_url}
+                    alt={assignedCommercial.full_name || 'Commercial'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={28} className="text-slate-400" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-0.5">Votre commercial</p>
+                <p className="font-black text-slate-900 truncate">{assignedCommercial.full_name || '—'}</p>
+                {assignedCommercial.job_title && (
+                  <p className="text-sm text-slate-500 truncate">{assignedCommercial.job_title}</p>
+                )}
+              </div>
+              {assignedCommercial.phone && (
+                <a
+                  href={`tel:${assignedCommercial.phone}`}
+                  className="flex-shrink-0 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 font-bold text-sm hover:bg-blue-100 transition"
+                >
+                  {assignedCommercial.phone}
+                </a>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                <User size={20} className="text-slate-400" />
+              </div>
+              <p className="text-sm text-slate-500 font-medium">
+                Aucun commercial n'est encore assigné à cette demande. Vous serez notifié dès qu'un membre de l'équipe prend en charge votre dossier.
+              </p>
+            </div>
+          )}
+
+          {/* Chat */}
           <div className="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px]">
             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
               <MessageCircle size={20} className="text-slate-500" />
-              <span className="font-bold text-slate-800">Conversation avec le commercial</span>
+              <span className="font-bold text-slate-800">Conversation</span>
             </div>
 
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[60vh]">
@@ -401,7 +455,6 @@ const ClientRequestDetailsPage = () => {
         </div>
       </div>
     </div>
-
   );
 };
 
