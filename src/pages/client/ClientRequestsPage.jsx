@@ -12,7 +12,10 @@ const ClientRequestsPage = () => {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     fetchRequests();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -29,7 +32,6 @@ const ClientRequestsPage = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      clearTimeout(fallbackTimerRef.current); // fetch réussi → annule le timer d'erreur
       setRequests(data || []);
     } catch (err) {
       console.error('Erreur chargement demandes:', err);
