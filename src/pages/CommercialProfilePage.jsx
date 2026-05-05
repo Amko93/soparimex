@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import AdminNav from '../components/AdminNav';
 import {
   User,
@@ -18,10 +19,10 @@ import {
 
 const CommercialProfilePage = () => {
   const toast = useToast();
+  const { profile, setProfile } = useAuth();
   const fileInputRef = useRef(null);
 
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const currentUser = profile; // alias pour compatibilité
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -37,34 +38,20 @@ const CommercialProfilePage = () => {
 
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  // Initialiser le formulaire depuis le contexte dès qu'il est disponible
   useEffect(() => {
-    const load = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) { setLoading(false); return; }
-
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, role, full_name, job_title, phone, city, bio, avatar_url, bio_visible')
-        .eq('id', session.user.id)
-        .single();
-
-      if (data) {
-        setCurrentUser({ id: data.id, role: data.role });
-        setForm({
-          full_name:   data.full_name   || '',
-          job_title:   data.job_title   || '',
-          phone:       data.phone       || '',
-          city:        data.city        || '',
-          bio:         data.bio         || '',
-          avatar_url:  data.avatar_url  || '',
-          bio_visible: data.bio_visible !== false,
-        });
-        if (data.avatar_url) setPreviewUrl(data.avatar_url);
-      }
-      setLoading(false);
-    };
-    load();
-  }, []);
+    if (!profile) return;
+    setForm({
+      full_name:   profile.full_name   || '',
+      job_title:   profile.job_title   || '',
+      phone:       profile.phone       || '',
+      city:        profile.city        || '',
+      bio:         profile.bio         || '',
+      avatar_url:  profile.avatar_url  || '',
+      bio_visible: profile.bio_visible !== false,
+    });
+    if (profile.avatar_url) setPreviewUrl(profile.avatar_url);
+  }, [profile?.id]);
 
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
@@ -142,6 +129,8 @@ const CommercialProfilePage = () => {
         .eq('id', currentUser.id);
 
       if (error) throw error;
+      // Synchroniser le contexte global pour que les autres composants voient le changement
+      setProfile((prev) => prev ? { ...prev, ...form } : prev);
       toast('Profil enregistré.', 'success');
     } catch (err) {
       toast('Erreur : ' + err.message, 'error');
@@ -150,7 +139,7 @@ const CommercialProfilePage = () => {
     }
   };
 
-  if (loading) {
+  if (!profile) {
     return (
       <div className="min-h-screen bg-site flex items-center justify-center">
         <Loader className="animate-spin text-blue-600" size={48} />

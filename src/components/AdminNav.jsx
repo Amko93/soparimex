@@ -1,20 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, LayoutGrid, Users, ClipboardList, History, UserCircle } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 const AdminNav = () => {
   const location = useLocation();
-  const [userRole, setUserRole] = useState(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user?.id) {
-        const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-        if (data) setUserRole(data.role);
-      }
-    });
-  }, []);
+  const { profile } = useAuth();
+  const userRole = profile?.role || null;
 
   const isCommercial = userRole === 'commercial';
   const currentPath = location.pathname;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft,
   Loader,
@@ -21,13 +22,13 @@ import {
 
 const AdminLeadDetailsPage = () => {
   const { id } = useParams();
+  const { profile: currentUser } = useAuth();
   const scrollContainerRef = useRef(null);
   const isInitialLoad = useRef(true);
   const [lead, setLead] = useState(null);
   const [messages, setMessages] = useState([]);
   const [clientProfile, setClientProfile] = useState(null);
   const [senderNames, setSenderNames] = useState({});
-  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [newMessage, setNewMessage] = useState('');
@@ -58,11 +59,7 @@ const AdminLeadDetailsPage = () => {
   }, [messages]);
 
   useEffect(() => {
-    loadCurrentUser();
-  }, []);
-
-  useEffect(() => {
-    if (!id || !currentUser) return;
+    if (!id || !currentUser?.id) return;
     fetchLead();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, currentUser?.id]);
@@ -110,13 +107,6 @@ const AdminLeadDetailsPage = () => {
       channelRef.current = null;
     };
   }, [lead?.id, currentUser]);
-
-  const loadCurrentUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) return;
-    const { data } = await supabase.from('profiles').select('id, role, full_name').eq('id', session.user.id).single();
-    if (data) setCurrentUser({ id: data.id, role: (data.role || '').toLowerCase(), full_name: data.full_name || '' });
-  };
 
   const canAccess = (leadData) => {
     if (!currentUser || !leadData) return false;

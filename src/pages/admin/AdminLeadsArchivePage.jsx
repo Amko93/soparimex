@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import AdminNav from '../../components/AdminNav';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import {
   Loader,
@@ -14,43 +15,19 @@ import {
 } from 'lucide-react';
 
 const AdminLeadsArchivePage = () => {
+  const { profile: currentUser } = useAuth();
   const [leads, setLeads] = useState([]);
   const [profilesMap, setProfilesMap] = useState({});
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
-    loadCurrentUser();
-  }, []);
-
-  useEffect(() => {
-    if (currentUser) fetchLeads();
+    if (currentUser?.id) fetchLeads();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
-
-  const loadCurrentUser = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) {
-        setLoading(false); // Pas de session → fetchLeads ne sera jamais appelé
-        return;
-      }
-      const { data } = await supabase.from('profiles').select('id, role').eq('id', session.user.id).single();
-      if (data) {
-        setCurrentUser({ id: data.id, role: (data.role || '').toLowerCase() });
-        // fetchLeads sera déclenché par le useEffect sur currentUser?.id
-      } else {
-        setLoading(false); // Profil introuvable → fetchLeads ne sera pas appelé
-      }
-    } catch (err) {
-      console.error('Erreur loadCurrentUser:', err);
-      setLoading(false); // Erreur réseau → on sort du spinner
-    }
-  };
 
   const fetchLeads = async () => {
     setLoading(true);

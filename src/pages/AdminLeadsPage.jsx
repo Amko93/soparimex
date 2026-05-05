@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import AdminNav from '../components/AdminNav';
 import {
   Loader,
@@ -16,21 +17,14 @@ const FILTER_MINE = 'mine';
 
 const AdminLeadsPage = () => {
   const toast = useToast();
+  const { profile: currentUser } = useAuth();
   const [leads, setLeads] = useState([]);
-  const [profilesMap, setProfilesMap] = useState({}); // id -> { full_name, societe }
+  const [profilesMap, setProfilesMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const fallbackTimerRef = useRef(null);
-  const [currentUser, setCurrentUser] = useState(null); // { id, role }
-  const [filter, setFilter] = useState(() => {
-    // Par défaut : "Nouveaux Leads" pour commercial, "Dossiers en cours" pour admin/dev
-    return FILTER_NEW; // Sera ajusté après loadCurrentUser
-  });
-
-  useEffect(() => {
-    loadCurrentUser();
-  }, []);
+  const [filter, setFilter] = useState(FILTER_NEW);
 
   useEffect(() => {
     fallbackTimerRef.current = setTimeout(() => { setError(true); setLoading(false); }, 10000);
@@ -38,28 +32,14 @@ const AdminLeadsPage = () => {
     return () => clearTimeout(fallbackTimerRef.current);
   }, []);
 
-  // Ajuster le filtre par défaut selon le rôle après chargement
+  // Ajuster le filtre par défaut selon le rôle
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser?.role) return;
     const r = (currentUser.role || '').toLowerCase();
-    if (r === 'admin' || r === 'developpeur') {
-      setFilter(FILTER_ALL);
-    } else if (r === 'commercial') {
-      setFilter(FILTER_NEW);
-    }
+    if (r === 'admin' || r === 'developpeur') setFilter(FILTER_ALL);
+    else if (r === 'commercial') setFilter(FILTER_NEW);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.role]);
-
-  const loadCurrentUser = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
-      const { data } = await supabase.from('profiles').select('id, role').eq('id', session.user.id).single();
-      if (data) setCurrentUser({ id: data.id, role: (data.role || '').toLowerCase() });
-    } catch (err) {
-      console.error('Erreur loadCurrentUser:', err);
-    }
-  };
 
   const fetchLeads = async () => {
     setLoading(true);

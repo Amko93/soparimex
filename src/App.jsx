@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { SelectionProvider } from './context/SelectionContext';
 import { ToastProvider } from './context/ToastContext';
+import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ThemeCustomizer from './components/ThemeCustomizer';
@@ -44,6 +45,7 @@ import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
+    <AuthProvider>
     <ThemeProvider>
       <ToastProvider>
         <SelectionProvider>
@@ -101,6 +103,7 @@ function App() {
         </SelectionProvider>
       </ToastProvider>
     </ThemeProvider>
+    </AuthProvider>
   );
 }
 

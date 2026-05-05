@@ -1,33 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
+import { useAuth } from '../../context/AuthContext';
 import { Loader, ClipboardList, Eye, Package, ShoppingBag } from 'lucide-react';
 
 const ClientRequestsPage = () => {
+  const { profile } = useAuth();
+  const userId = profile?.id || null;
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [userId, setUserId] = useState(null);
-  const fallbackTimerRef = useRef(null);
-
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.id) {
-          setLoading(false);
-          return;
-        }
-        setUserId(session.user.id);
-      } catch {
-        setError(true);
-        setLoading(false);
-      }
-    };
-    fallbackTimerRef.current = setTimeout(() => { setError(true); setLoading(false); }, 10000);
-    init();
-    return () => clearTimeout(fallbackTimerRef.current);
-  }, []);
 
   useEffect(() => {
     if (!userId) return;

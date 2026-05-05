@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import AdminNav from '../../components/AdminNav';
 import {
   ArrowLeft,
@@ -31,11 +32,12 @@ const AdminUserProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { profile: authProfile } = useAuth();
+  const currentUser = authProfile; // admin connecté
 
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState(null); // profil de l'utilisateur consulté
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
 
   const [actionLoading, setActionLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -43,17 +45,6 @@ const AdminUserProfilePage = () => {
   const [showEditRole, setShowEditRole] = useState(false);
   const [editRole, setEditRole] = useState('');
   const [editValidated, setEditValidated] = useState(false);
-
-  useEffect(() => {
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        const { data } = await supabase.from('profiles').select('id, role').eq('id', session.user.id).single();
-        if (data) setCurrentUser({ id: data.id, role: (data.role || '').toLowerCase() });
-      }
-    };
-    init();
-  }, []);
 
   useEffect(() => {
     fetchData();

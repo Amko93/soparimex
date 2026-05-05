@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import AdminNav from '../components/AdminNav';
 import {
   Users,
@@ -22,6 +23,7 @@ import {
 
 const AdminDashboardPage = () => {
   const toast = useToast();
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [adminName, setAdminName] = useState('');
@@ -42,25 +44,18 @@ const AdminDashboardPage = () => {
     return () => clearTimeout(savedTimerRef.current);
   }, []);
 
+  // Nom depuis le contexte — aucune requête réseau
   useEffect(() => {
-    loadAdminProfile();
-  }, []);
+    if (profile?.full_name?.trim()) {
+      setAdminName(profile.full_name.trim().split(/\s+/)[0]);
+    }
+  }, [profile?.full_name]);
 
   useEffect(() => {
     fetchDashboardData();
     const fallback = setTimeout(() => { setError(true); setLoading(false); }, 10000);
     return () => clearTimeout(fallback);
   }, []);
-
-  const loadAdminProfile = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) return;
-    const { data } = await supabase.from('profiles').select('full_name').eq('id', session.user.id).single();
-    if (data?.full_name?.trim()) {
-      const first = data.full_name.trim().split(/\s+/)[0];
-      setAdminName(first);
-    }
-  };
 
   const fetchDashboardData = async () => {
     setLoading(true);

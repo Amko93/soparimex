@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import AdminNav from '../components/AdminNav';
 import {
   Users,
@@ -18,6 +19,7 @@ import {
 
 const AdminUsersPage = () => {
   const toast = useToast();
+  const { profile: currentUser } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,20 +27,9 @@ const AdminUsersPage = () => {
   const [actionLoading, setActionLoading] = useState(null);
   const [editModal, setEditModal] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null); // { id, role }
 
   useEffect(() => {
     fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    const loadCurrentUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
-      const { data } = await supabase.from('profiles').select('id, role').eq('id', session.user.id).single();
-      if (data) setCurrentUser({ id: data.id, role: (data.role || '').toLowerCase() });
-    };
-    loadCurrentUser();
   }, []);
 
   const fetchUsers = async () => {

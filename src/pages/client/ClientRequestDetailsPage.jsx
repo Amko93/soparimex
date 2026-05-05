@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft,
   Loader,
@@ -19,11 +20,11 @@ import {
 
 const ClientRequestDetailsPage = () => {
   const { id } = useParams();
+  const { profile: currentUser } = useAuth();
   const scrollContainerRef = useRef(null);
   const [lead, setLead] = useState(null);
   const [messages, setMessages] = useState([]);
   const [senderNames, setSenderNames] = useState({});
-  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [newMessage, setNewMessage] = useState('');
@@ -54,10 +55,6 @@ const ClientRequestDetailsPage = () => {
       }
     }
   }, [messages]);
-
-  useEffect(() => {
-    loadCurrentUser();
-  }, []);
 
   useEffect(() => {
     if (!id || !currentUser?.id) return;
@@ -109,13 +106,6 @@ const ClientRequestDetailsPage = () => {
       channelRef.current = null;
     };
   }, [lead?.id, currentUser?.id]);
-
-  const loadCurrentUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) return;
-    const { data } = await supabase.from('profiles').select('id, full_name').eq('id', session.user.id).single();
-    if (data) setCurrentUser({ id: data.id, full_name: data.full_name || '' });
-  };
 
   const fetchData = async () => {
     setLoading(true);

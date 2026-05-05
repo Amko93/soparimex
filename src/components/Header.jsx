@@ -1,65 +1,34 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext'; 
+import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { Search, User, LogIn, LogOut, LayoutDashboard, X, Loader, Package, Menu, ClipboardList, FileText } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const Header = () => {
   const { texts, colors } = useTheme();
+  const { session, profile } = useAuth(); // ← lecture depuis le contexte global, aucune requête réseau
+  const userRole = profile?.role || 'client';
   const navigate = useNavigate();
-  const [session, setSession] = useState(null);
-  const [userRole, setUserRole] = useState('client');
-  
+
   // --- ÉTATS RECHERCHE & MENU ---
   const [searchTerm, setSearchTerm] = useState('');
-  const [liveResults, setLiveResults] = useState([]); 
-  const [isSearching, setIsSearching] = useState(false); 
-  const [showDropdown, setShowDropdown] = useState(false); 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Nouvel état pour le menu mobile
+  const [liveResults, setLiveResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const searchRefDesktop = useRef(null);
   const searchRefMobile = useRef(null);
 
-  const fetchRole = async (userId, attempt = 1) => {
-    try {
-      const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).single();
-      if (error) throw error;
-      if (data) setUserRole(data.role);
-    } catch (err) {
-      console.error(`fetchRole échoué (tentative ${attempt}):`, err);
-      if (attempt < 3) {
-        setTimeout(() => fetchRole(userId, attempt + 1), attempt * 1000);
-      }
-    }
-  };
-
   useEffect(() => {
-    // Gestion Session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchRole(session.user.id);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) fetchRole(session.user.id);
-      else setUserRole('client');
-    });
-
     // Gestion Clic en dehors pour fermer la recherche
     const handleClickOutside = (event) => {
       const inDesktop = searchRefDesktop.current?.contains(event.target);
       const inMobile = searchRefMobile.current?.contains(event.target);
-      if (!inDesktop && !inMobile) {
-        setShowDropdown(false);
-      }
+      if (!inDesktop && !inMobile) setShowDropdown(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      subscription.unsubscribe();
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // --- LOGIQUE LIVE SEARCH ---
