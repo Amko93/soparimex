@@ -3,43 +3,54 @@ import { supabase } from '../supabaseClient';
 
 const AuthContext = createContext(null);
 
-/**
- * Charge le profil complet d'un utilisateur depuis Supabase.
- * Appelé une seule fois au démarrage — partagé via contexte.
- */
 const loadProfile = async (userId) => {
   if (!userId) return null;
-  const { data } = await supabase
-    .from('profiles')
-    .select('id, role, full_name, is_validated, status, email, phone, city, societe, job_title, avatar_url, bio, bio_visible')
-    .eq('id', userId)
-    .single();
-  return data || null;
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, role, full_name, is_validated, status, email, phone, city, societe, job_title, avatar_url, bio, bio_visible')
+      .eq('id', userId)
+      .single();
+    return data || null;
+  } catch {
+    return null;
+  }
 };
 
 export const AuthProvider = ({ children }) => {
-  const [session, setSession] = useState(undefined); // undefined = en cours de chargement
+  const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    const init = async () => {
-      // getSession() lit depuis localStorage — quasi-instantané (pas de réseau)
-      const { data: { session: s } } = await supabase.auth.getSession();
-      if (!mounted) return;
-
-      if (s?.user) {
-        const prof = await loadProfile(s.user.id);
-        if (mounted) {
-          setSession(s);
-          setProfile(prof);
-        }
-      } else {
-        if (mounted) setSession(null);
-      }
+    // Timeout de sécurité : si ça bloque plus de 6s, on débloque quand même
+    const safetyTimer = setTimeout(() => {
       if (mounted) setLoading(false);
+    }, 6000);
+
+    const init = async () => {
+      try {
+        const { data: { session: s } } = await supabase.auth.getSession();
+        if (!mounted) return;
+
+        if (s?.user) {
+          const prof = await loadProfile(s.user.id);
+          if (mounted) {
+            setSession(s);
+            setProfile(prof);
+          }
+        } else {
+          if (mounted) setSession(null);
+        }
+      } catch (err) {
+        console.error('AuthContext init error:', err);
+        if (mounted) setSession(null);
+      } finally {
+        clearTimeout(safetyTimer);
+        if (mounted) setLoading(false);
+      }
     };
 
     init();
@@ -51,18 +62,25 @@ export const AuthProvider = ({ children }) => {
       if (event === 'SIGNED_OUT') {
         setSession(null);
         setProfile(null);
+        setLoading(false);
         return;
       }
 
-      if (s?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
-        setSession(s);
-        const prof = await loadProfile(s.user.id);
-        if (mounted) setProfile(prof);
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        if (s?.user) {
+          setSession(s);
+          const prof = await loadProfile(s.user.id);
+          if (mounted) {
+            setProfile(prof);
+            setLoading(false);
+          }
+        }
       }
     });
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription?.unsubscribe();
     };
   }, []);
@@ -74,9 +92,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-/**
- * Hook pour accéder au contexte d'authentification.
- * profile contient : id, role, full_name, is_validated, status, email,
- *                    phone, city, societe, job_title, avatar_url, bio, bio_visible
- */
 export const useAuth = () => useContext(AuthContext);
