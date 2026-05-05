@@ -25,58 +25,61 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Timeout de sécurité : si ça bloque plus de 6s, on débloque quand même
+    // Timeout de sécurité absolu : débloque après 8s quoi qu'il arrive
     const safetyTimer = setTimeout(() => {
       if (mounted) setLoading(false);
-    }, 6000);
+    }, 8000);
 
-    const init = async () => {
-      try {
-        const { data: { session: s } } = await supabase.auth.getSession();
+    // Pattern officiel Supabase v2 : onAuthStateChange fire toujours
+    // INITIAL_SESSION en premier (même sans réseau), puis les autres events.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, s) => {
         if (!mounted) return;
 
-        if (s?.user) {
-          const prof = await loadProfile(s.user.id);
-          if (mounted) {
-            setSession(s);
-            setProfile(prof);
+        try {
+          if (event === 'INITIAL_SESSION') {
+            // Toujours déclenché, même si pas de session
+            if (s?.user) {
+              const prof = await loadProfile(s.user.id);
+              if (mounted) {
+                setSession(s);
+                setProfile(prof);
+              }
+            } else {
+              if (mounted) {
+                setSession(null);
+                setProfile(null);
+              }
+            }
+            // Auth initialisée — fin du chargement
+            clearTimeout(safetyTimer);
+            if (mounted) setLoading(false);
+            return;
           }
-        } else {
-          if (mounted) setSession(null);
-        }
-      } catch (err) {
-        console.error('AuthContext init error:', err);
-        if (mounted) setSession(null);
-      } finally {
-        clearTimeout(safetyTimer);
-        if (mounted) setLoading(false);
-      }
-    };
 
-    init();
+          if (event === 'SIGNED_OUT') {
+            setSession(null);
+            setProfile(null);
+            setLoading(false);
+            return;
+          }
 
-    // Écouter les changements de session (connexion, déconnexion, refresh token)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
-      if (!mounted) return;
-
-      if (event === 'SIGNED_OUT') {
-        setSession(null);
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
-
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        if (s?.user) {
-          setSession(s);
-          const prof = await loadProfile(s.user.id);
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+            if (s?.user) {
+              setSession(s);
+              const prof = await loadProfile(s.user.id);
+              if (mounted) setProfile(prof);
+            }
+          }
+        } catch (err) {
+          console.error('AuthContext error:', err);
           if (mounted) {
-            setProfile(prof);
+            clearTimeout(safetyTimer);
             setLoading(false);
           }
         }
       }
-    });
+    );
 
     return () => {
       mounted = false;
