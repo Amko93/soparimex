@@ -441,8 +441,8 @@ const AdminLeadDetailsPage = () => {
                         isMyMessage(msg)
                           ? 'bg-blue-600 text-white rounded-br-md'
                           : isDeletedUser(msg)
-                          ? 'bg-slate-200 text-slate-600 rounded-bl-md border border-slate-300'
-                          : 'bg-slate-100 text-slate-800 rounded-bl-md'
+                          ? 'bg-slate-300 text-slate-600 rounded-bl-md border border-slate-300'
+                          : 'bg-slate-200 text-slate-800 rounded-bl-md'
                       }`}
                     >
                       {msg.content && <p className="text-sm whitespace-pre-wrap">{msg.content}</p>}
